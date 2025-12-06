@@ -1,0 +1,27 @@
+package com.example.WorkWite_Repo_BE.entities;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@Entity
+public class Employers {
+
+    @Id
+    private Long id; // Sẽ dùng chung với id của User
+
+    private String phoneNumber;
+    private String avatar;
+
+    @OneToOne(optional = false, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @MapsId // Lấy id từ User
+    @JoinColumn(name = "id") // cột id vừa là PK vừa là FK
+    private User user;
+    private String status;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "company_information_id", referencedColumnName = "id")
+    private CompanyInformation companyInformation;
+}

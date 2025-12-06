@@ -1,0 +1,30 @@
+package com.example.WorkWite_Repo_BE.repositories;
+
+
+import com.example.WorkWite_Repo_BE.entities.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface UserJpaRepository extends JpaRepository<User, Long> {
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.username = :username")
+    Optional<User> findByUsername(String username);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.email = :email")
+    Optional<User> findByUserEmail(String email);
+
+    boolean existsByEmail(String email);
+
+
+    @Query("SELECT MONTH(u.createdAt) as month, COUNT(u) as value FROM User u WHERE YEAR(u.createdAt) = :year GROUP BY MONTH(u.createdAt)")
+    List<Object[]> countUserByMonth(@Param("year") int year);
+
+
+
+
+}

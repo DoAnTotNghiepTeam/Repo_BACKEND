@@ -78,6 +78,14 @@ public class Resume {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @OneToOne(
+            mappedBy = "resume",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private ResumeCustomization customization;
+
     @PreUpdate
     public void onUpdate() {
         this.updatedAt = LocalDateTime.now();

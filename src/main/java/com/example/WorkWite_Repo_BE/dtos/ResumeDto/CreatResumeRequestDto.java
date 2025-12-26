@@ -4,6 +4,8 @@ import com.example.WorkWite_Repo_BE.dtos.Activity.CreatAvtivityRequestDto;
 import com.example.WorkWite_Repo_BE.dtos.AwardDto.CreatAwardRequestDto;
 import com.example.WorkWite_Repo_BE.dtos.Education.CreatEducationRequestDto;
 import com.example.WorkWite_Repo_BE.dtos.ExperienceDto.CreatExperienceRequestDto;
+import com.example.WorkWite_Repo_BE.dtos.ResumeCustomizationDto.ResumeCustomizationRequest;
+import com.example.WorkWite_Repo_BE.entities.ResumeCustomization;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,6 +26,8 @@ public class CreatResumeRequestDto {
     private String jobTitle;
     private String template;
     private String resumeLink;
+
+    private ResumeCustomization customization;
 
     private List<CreatEducationRequestDto> educations; // Dữ liệu tạo mới Education
     private List<CreatAwardRequestDto> awards; // Dữ liệu tạo mới Award

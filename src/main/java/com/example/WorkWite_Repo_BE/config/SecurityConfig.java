@@ -67,7 +67,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/blogs/**").permitAll()
                                 .requestMatchers("/api/aboutus/**").permitAll()
                                 .requestMatchers("/api/ourteam/**").permitAll()
-                                .requestMatchers("api/employers-status/**").permitAll()
+                                .requestMatchers("/api/employers-status/**").permitAll()
 
                                 // Default: permit all
                                 .anyRequest().permitAll()

@@ -1,5 +1,6 @@
 package com.example.WorkWite_Repo_BE.services;
 
+import com.example.WorkWite_Repo_BE.dtos.ResumeCustomizationDto.ResumeCustomizationRequest;
 import com.example.WorkWite_Repo_BE.dtos.ResumeDto.CreatResumeRequestDto;
 import com.example.WorkWite_Repo_BE.dtos.ResumeDto.ResumeResponseDto;
 import com.example.WorkWite_Repo_BE.dtos.ResumeDto.UpdataResumeRequestDto;
@@ -62,9 +63,24 @@ public class ResumeService {
         resume1.setSummary(creatResumeRequestDto.getSummary());
         resume1.setJobTitle(creatResumeRequestDto.getJobTitle());
         resume1.setTemplate(creatResumeRequestDto.getTemplate());
-        resume1.setTemplate(creatResumeRequestDto.getTemplate());
+//        resume1.setTemplate(creatResumeRequestDto.getTemplate());
         resume1.setCreatedAt(LocalDateTime.now());
         resume1.setResumeLink(creatResumeRequestDto.getResumeLink());
+        // 2️⃣ CUSTOMIZATION (lấy từ DTO – QUAN TRỌNG)
+        if (creatResumeRequestDto.getCustomization() != null) {
+            ResumeCustomization customization = ResumeCustomization.builder()
+                    .font(creatResumeRequestDto.getCustomization().getFont())
+                    .colorScheme(creatResumeRequestDto.getCustomization().getColorScheme())
+                    .customColor(creatResumeRequestDto.getCustomization().getCustomColor())
+                    .spacing(creatResumeRequestDto.getCustomization().getSpacing())
+                    .fontSize(creatResumeRequestDto.getCustomization().getFontSize())
+                    .backgroundPattern(creatResumeRequestDto.getCustomization().getBackgroundPattern())
+                    .resume(resume1)
+                    .build();
+
+            resume1.setCustomization(customization);
+        }
+
         resumeRepository.save(resume1);
 
         if (creatResumeRequestDto.getEducations() != null) {
@@ -164,10 +180,29 @@ public class ResumeService {
             resume.setProfilePicture(resumeUpdateDto.getProfilePicture());
             resume.setSummary(resumeUpdateDto.getSummary());
             resume.setJobTitle(resumeUpdateDto.getJobTitle());
-            resume.setTemplate(resumeUpdateDto.getTemplate());
+//            resume.setTemplate(resumeUpdateDto.getTemplate());
             // Cập nhật skillsResumes nếu có truyền lên
             if (resumeUpdateDto.getSkillsResumes() != null) {
                 resume.setSkillsResumes(resumeUpdateDto.getSkillsResumes());
+            }
+            // 2️⃣ CUSTOMIZATION (update hoặc tạo mới)
+            if (resumeUpdateDto.getCustomization() != null) {
+
+                ResumeCustomization customization = resume.getCustomization();
+
+                if (customization == null) {
+                    customization = new ResumeCustomization();
+                    customization.setResume(resume);
+                }
+
+                customization.setFont(resumeUpdateDto.getCustomization().getFont());
+                customization.setColorScheme(resumeUpdateDto.getCustomization().getColorScheme());
+                customization.setCustomColor(resumeUpdateDto.getCustomization().getCustomColor());
+                customization.setSpacing(resumeUpdateDto.getCustomization().getSpacing());
+                customization.setFontSize(resumeUpdateDto.getCustomization().getFontSize());
+                customization.setBackgroundPattern(resumeUpdateDto.getCustomization().getBackgroundPattern());
+
+                resume.setCustomization(customization);
             }
             // Cập nhật education nếu có truyền lên
             if (resumeUpdateDto.getEducations() != null) {
@@ -181,6 +216,7 @@ public class ResumeService {
                     newEdu.setDegree(eduDto.getDegree());
                     newEdu.setMajor(eduDto.getMajor());
                     newEdu.setStartYear(eduDto.getStartYear());
+                    newEdu.setGPA(eduDto.getGPA());
                     newEdu.setEndYear(eduDto.getEndYear());
                     educationService.createEducation(newEdu, resume.getId());
                 });
@@ -191,9 +227,10 @@ public class ResumeService {
                 resumeUpdateDto.getActivities().forEach(actDto -> {
                     com.example.WorkWite_Repo_BE.dtos.Activity.CreatAvtivityRequestDto newAct = new com.example.WorkWite_Repo_BE.dtos.Activity.CreatAvtivityRequestDto();
                     newAct.setActivityName(actDto.getActivityName());
-//                    newAct.setRole(actDto.getRole());
+                    newAct.setOrganization(actDto.getOrganization());
                     newAct.setStartYear(actDto.getStartYear());
                     newAct.setEndYear(actDto.getEndYear());
+                    newAct.setDescription(actDto.getDescription());
                     activityService.createActivity(newAct, resume.getId());
                 });
             }
@@ -204,6 +241,8 @@ public class ResumeService {
                     com.example.WorkWite_Repo_BE.dtos.AwardDto.CreatAwardRequestDto newAward = new com.example.WorkWite_Repo_BE.dtos.AwardDto.CreatAwardRequestDto();
                     newAward.setAwardName(awardDto.getAwardName());
                     newAward.setAwardYear(awardDto.getAwardYear());
+                    newAward.setDonViTrao(awardDto.getDonViTrao());
+                    newAward.setDescription(awardDto.getDescription());
                     awardService.createAward(newAward, resume.getId());
                 });
             }
@@ -262,6 +301,19 @@ public class ResumeService {
                 : resume.getApplicants().stream()
                 .map(Applicant::getId)
                 .toList();
+        // ✅ MAP CUSTOMIZATION ENTITY → DTO
+        ResumeCustomizationRequest customizationDto = null;
+        if (resume.getCustomization() != null) {
+            ResumeCustomization c = resume.getCustomization();
+            customizationDto = new ResumeCustomizationRequest(
+                    c.getFont(),
+                    c.getColorScheme(),
+                    c.getCustomColor(),
+                    c.getSpacing(),
+                    c.getFontSize(),
+                    c.getBackgroundPattern()
+            );
+        }
         // Fix: tra ve list rỗng nếu không có dữ liệu
         return new ResumeResponseDto(
                 resume.getId(),
@@ -281,6 +333,7 @@ public class ResumeService {
                 resume.getSummary(),
                 resume.getCandidate().getId(),
                 resume.getExperiences() == null ? java.util.Collections.<Experience>emptyList() : resume.getExperiences(),
+                customizationDto,
                 resume.getResumeLink()
         );
     }

@@ -4,6 +4,7 @@ import com.example.WorkWite_Repo_BE.dtos.CandidateDto.CandidatesResponseDto;
 import com.example.WorkWite_Repo_BE.dtos.CandidateDto.PaginatedCandidateResponseDto;
 import com.example.WorkWite_Repo_BE.dtos.CandidateDto.UpdateCandidateRequestDto;
 import com.example.WorkWite_Repo_BE.dtos.JobPostDto.JobPostingResponseDTO;
+import com.example.WorkWite_Repo_BE.dtos.ResumeCustomizationDto.ResumeCustomizationRequest;
 import com.example.WorkWite_Repo_BE.dtos.ResumeDto.ResumeResponseDto;
 import com.example.WorkWite_Repo_BE.dtos.savejob.SavedJobDTO;
 import com.example.WorkWite_Repo_BE.entities.*;
@@ -25,6 +26,7 @@ public class CandidatesServices {
     public CandidatesServices(CandidateJpaRepository candidateJpaRepository) {
         this.candidateJpaRepository = candidateJpaRepository;
     }
+
 
     private CandidatesResponseDto convertToDto(Candidate candidate) {
         // Chuyển đổi LocalDateTime thành String với định dạng mong muốn
@@ -56,6 +58,19 @@ public class CandidatesServices {
                             : resume.getApplicants().stream()
                             .map(Applicant::getId)
                             .toList();
+                    // ✅ MAP CUSTOMIZATION ENTITY → DTO
+                    ResumeCustomizationRequest customizationDto = null;
+                    if (resume.getCustomization() != null) {
+                        ResumeCustomization c = resume.getCustomization();
+                        customizationDto = new ResumeCustomizationRequest(
+                                c.getFont(),
+                                c.getColorScheme(),
+                                c.getCustomColor(),
+                                c.getSpacing(),
+                                c.getFontSize(),
+                                c.getBackgroundPattern()
+                        );
+                    }
                     return new ResumeResponseDto(
                             resume.getId(),
                             resume.getProfilePicture(),
@@ -75,6 +90,7 @@ public class CandidatesServices {
                             resume.getSummary(),
                             resume.getCandidate().getId(),
                             resume.getExperiences() == null ? java.util.Collections.<Experience>emptyList() : resume.getExperiences(),
+                            customizationDto,
                             resume.getResumeLink()
                     );
                 })

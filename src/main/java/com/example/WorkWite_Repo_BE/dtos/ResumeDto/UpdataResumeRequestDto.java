@@ -1,5 +1,7 @@
 package com.example.WorkWite_Repo_BE.dtos.ResumeDto;
 
+import com.example.WorkWite_Repo_BE.dtos.ResumeCustomizationDto.ResumeCustomizationRequest;
+import com.example.WorkWite_Repo_BE.entities.ResumeCustomization;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -34,6 +36,8 @@ public class UpdataResumeRequestDto {
 
     @NotBlank(message = "Vị trí công việc không được để trống")
     private String jobTitle;
+
+    private ResumeCustomization customization;
 
     private java.util.List<String> skillsResumes;
 

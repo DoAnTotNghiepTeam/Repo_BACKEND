@@ -38,6 +38,8 @@ public class    AwardService {
         Resume resume = resumeJpaRepository.findById(resumeId).orElse(null);
         award.setAwardName(createAwardDto.getAwardName());
         award.setAwardYear(createAwardDto.getAwardYear());
+        award.setDescription(createAwardDto.getDescription());
+        award.setDonViTrao(createAwardDto.getDonViTrao());
 
         award.setResume(resume);
         Award awardNew = awardJpaRepository.save(award);

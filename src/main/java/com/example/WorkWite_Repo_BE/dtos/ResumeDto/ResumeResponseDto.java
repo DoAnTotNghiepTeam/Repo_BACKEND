@@ -1,5 +1,6 @@
 package com.example.WorkWite_Repo_BE.dtos.ResumeDto;
 
+import com.example.WorkWite_Repo_BE.dtos.ResumeCustomizationDto.ResumeCustomizationRequest;
 import com.example.WorkWite_Repo_BE.entities.*;
 import lombok.Data;
 
@@ -24,6 +25,7 @@ public class    ResumeResponseDto {
     private List<Long> applicantIds;
     private List<String> skillsResumes;
     private Long candidateId;
+    private ResumeCustomizationRequest customization;
     private String resumeLink;
 
     // Constructor với tất cả các trường
@@ -32,7 +34,7 @@ public class    ResumeResponseDto {
     public ResumeResponseDto(Long id, String profilePicture, String fullName, String email, String phone,
                              String createdAt, String jobTitle,String template, List<Activity> activities,
                              List<Education> educations, List<Award> awards,List<Long> applicantIds,
-                             List<String> skillsResumes, String summary,Long candidateId,List<Experience> experiences, String resumeLink) {
+                             List<String> skillsResumes, String summary,Long candidateId,List<Experience> experiences,ResumeCustomizationRequest customization, String resumeLink) {
         this.id = id;
         this.profilePicture = profilePicture;
         this.fullName = fullName;
@@ -49,6 +51,7 @@ public class    ResumeResponseDto {
         this.summary = summary;
         this.candidateId=candidateId;
         this.experiences = experiences;
+        this.customization = customization;
         this.resumeLink = resumeLink;
     }
 }

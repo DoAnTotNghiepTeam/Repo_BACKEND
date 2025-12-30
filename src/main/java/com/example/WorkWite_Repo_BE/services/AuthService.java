@@ -28,39 +28,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    // login 
-    public LoginResponseDto login(LoginRequestDto request) {
-    User user = userJpaRepository.findByUsername(request.getUsername())
-        .orElseThrow(() -> new HttpException("Invalid username or password", HttpStatus.UNAUTHORIZED));
-
-    if (!request.getPassword().equals(user.getPassword())) {
-        throw new HttpException("Invalid username or password", HttpStatus.UNAUTHORIZED);
-    }
-
-    // Tạo JWT tokens
-    String accessToken = jwtService.generateAccessToken(user);
-    String refreshToken = jwtService.generateRefreshToken(user);
-
-    // Lấy roles của user
-    List<String> roles = user.getRoles() != null ? 
-        user.getRoles().stream().map(role -> role.getName()).collect(Collectors.toList()) : 
-        List.of("Users");
-
-    LoginResponseDto.LoggedInUserDto loggedInUser = LoginResponseDto.LoggedInUserDto.builder()
-        .id(user.getId())
-        .fullname(user.getFullName())
-        .username(user.getUsername())
-        .status("active")
-        .email(user.getEmail())
-        .roles(roles)
-        .build();
-
-    return LoginResponseDto.builder()
-        .access_token(accessToken)
-        .refresh_token(refreshToken)
-        .loggedInUser(loggedInUser)
-        .build();
-    }
 
     private final UserJpaRepository userRepository;
     private final CandidateJpaRepository candidateRepository;
@@ -71,7 +38,45 @@ public class AuthService {
     private final CandidatesServices candidatesServices;
     private final MailService mailService;
 
-    // register 
+
+
+    // login
+    public LoginResponseDto login(LoginRequestDto request) {
+        User user = userJpaRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new HttpException("Invalid username or password", HttpStatus.UNAUTHORIZED));
+
+        if (!request.getPassword().equals(user.getPassword())) {
+            throw new HttpException("Invalid username or password", HttpStatus.UNAUTHORIZED);
+        }
+
+        // Tạo JWT tokens
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+
+        // Lấy roles của user
+        List<String> roles = user.getRoles() != null ?
+                user.getRoles().stream().map(role -> role.getName()).collect(Collectors.toList()) :
+                List.of("Users");
+
+        LoginResponseDto.LoggedInUserDto loggedInUser = LoginResponseDto.LoggedInUserDto.builder()
+                .id(user.getId())
+                .fullname(user.getFullName())
+                .username(user.getUsername())
+                .status("active")
+                .email(user.getEmail())
+                .roles(roles)
+                .build();
+
+        return LoginResponseDto.builder()
+                .access_token(accessToken)
+                .refresh_token(refreshToken)
+                .loggedInUser(loggedInUser)
+                .build();
+    }
+
+
+
+    // register
     public Map<String, Object> register(RegisterRequestDto request) {
         // email đã tồn tại
         if (userJpaRepository.existsByEmail(request.getEmail())) {
@@ -95,14 +100,14 @@ public class AuthService {
         candidatesServices.createCandidateForUser(user);
 
         Map<String, Object> responseRegister = Map.of(
-            "message", "Đăng ký thành công!",
-            "data", Map.of(
-                "id", user.getId(),
-                "email", user.getEmail(),
-                "fullname", user.getFullName(),
-                "username", user.getUsername()
+                "message", "Đăng ký thành công!",
+                "data", Map.of(
+                        "id", user.getId(),
+                        "email", user.getEmail(),
+                        "fullname", user.getFullName(),
+                        "username", user.getUsername()
                 )
-                );
+        );
         return responseRegister;
     }
 
@@ -120,17 +125,17 @@ public class AuthService {
         userJpaRepository.save(user);
 
         // Gửi email chứa mã 6 số
-    mailService.sendMail(email, "Reset Password - JobBox",
-        "<div style='font-family:sans-serif;padding:16px;border-radius:8px;border:1px solid #eee;max-width:900px;'>"
-            + "<h2 style='color:#2b6cb0;'>JobBox - Password Reset</h2>"
-            + "<p>Xin chào,</p>"
-            + "<p>Bạn vừa yêu cầu đặt lại mật khẩu. Mã xác thực của bạn là:</p>"
-            + "<div style='font-size:24px;font-weight:bold;color:#e53e3e;margin:16px 0;'>" + code + "</div>"
-            + "<p>Mã này có hiệu lực trong 15 phút.</p>"
-            + "<p>Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>"
-            + "<hr style='margin:16px 0;'>"
-            + "<small>JobBox Team</small>"
-            + "</div>");
+        mailService.sendMail(email, "Reset Password - JobBox",
+                "<div style='font-family:sans-serif;padding:16px;border-radius:8px;border:1px solid #eee;max-width:900px;'>"
+                        + "<h2 style='color:#2b6cb0;'>JobBox - Password Reset</h2>"
+                        + "<p>Xin chào,</p>"
+                        + "<p>Bạn vừa yêu cầu đặt lại mật khẩu. Mã xác thực của bạn là:</p>"
+                        + "<div style='font-size:24px;font-weight:bold;color:#e53e3e;margin:16px 0;'>" + code + "</div>"
+                        + "<p>Mã này có hiệu lực trong 15 phút.</p>"
+                        + "<p>Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>"
+                        + "<hr style='margin:16px 0;'>"
+                        + "<small>JobBox Team</small>"
+                        + "</div>");
 
         return Map.of("message", "Reset code sent to email");
     }
@@ -174,9 +179,9 @@ public class AuthService {
     // ✅ Lấy EmployerId hiện tại (dành cho HR/Employer quản lý job)
     public Long getCurrentUserEmployerId() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-    return employersJpaRepository.findByUserUsername(username)
-        .map(Employers::getId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employer không tồn tại"));
+        return employersJpaRepository.findByUserUsername(username)
+                .map(Employers::getId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employer không tồn tại"));
     }
 
     // ✅ Lấy Full Name user hiện tại

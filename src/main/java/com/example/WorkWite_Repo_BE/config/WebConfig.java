@@ -16,7 +16,14 @@ public class WebConfig {
                 registry.addMapping("/api/**")
                         .allowedOrigins("http://localhost:3000","http://localhost:5173","http://localhost:3001", "http://localhost:5174")
                         .allowedMethods("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*");
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
+
+                registry.addMapping("/uploads/**")
+                        .allowedOrigins("http://localhost:3000","http://localhost:5173","http://localhost:3001", "http://localhost:5174", "http://localhost:8080")
+                        .allowedMethods("GET", "OPTIONS")
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
             }
 
             @Override

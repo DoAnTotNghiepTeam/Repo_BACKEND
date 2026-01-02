@@ -1,21 +1,41 @@
 
 package com.example.WorkWite_Repo_BE.controlers;
 
+import com.example.WorkWite_Repo_BE.dtos.BannerDto.BannerRequestDTO;
+import com.example.WorkWite_Repo_BE.dtos.BannerDto.BannerUpdateRequestDTO;
 import com.example.WorkWite_Repo_BE.dtos.BannerDto.BannerResponseDTO;
-import com.example.WorkWite_Repo_BE.entities.Banner;
 import com.example.WorkWite_Repo_BE.services.BannerService;
+import com.example.WorkWite_Repo_BE.services.FileUploadService;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/banners")
 @RequiredArgsConstructor
 public class BannerController {
+    
+    // Fields ở đầu class
+    private final BannerService bannerService;
+    private final FileUploadService fileUploadService;
+    private final Validator validator;  // ← Inject Validator
+    
+    @Value("${banner.upload.dir}")
+    private String bannerUploadDir;
+    
+    // ==========================
+    // API Endpoints
+    // ==========================
+    
     // Lấy danh sách tất cả banner theo phân trang
     @GetMapping("/paginated")
     public ResponseEntity<com.example.WorkWite_Repo_BE.dtos.BannerDto.PaginatedBannerResponseDto> getAllBannersPaginated(
@@ -23,22 +43,39 @@ public class BannerController {
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(bannerService.getAllBannersPaginated(page, size));
     }
-    @Value("${banner.upload.dir}")
-    private String bannerUploadDir;
     
     // Lấy tất cả banner theo userId
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<BannerResponseDTO>> getBannersByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(bannerService.getBannersByUserId(userId));
     }
+    
+    // Lấy banner đang ACTIVE - có thể lọc theo bannerType (Vip/Featured/Standard)
     @GetMapping("/active")
-    public ResponseEntity<List<BannerResponseDTO>> getActiveBannersByType(@RequestParam String bannerType) {
+    public ResponseEntity<List<BannerResponseDTO>> getActiveBannerList(
+            @RequestParam(required = false) String bannerType) {
+        return ResponseEntity.ok(bannerService.getActiveBannerList(bannerType));
+    }
+    
+    // Lấy banner đã được admin DUYỆT (APPROVED) - chờ đến ngày hiển thị
+    @GetMapping("/approved")
+    public ResponseEntity<List<BannerResponseDTO>> getApprovedBanners() {
+        return ResponseEntity.ok(bannerService.getApprovedBanners());
+    }
+    
+    // Lấy banner ACTIVE theo type cụ thể (Vip/Featured/Standard)
+    @GetMapping("/type/{bannerType}")
+    public ResponseEntity<List<BannerResponseDTO>> getActiveBannersByType(@PathVariable String bannerType) {
         return ResponseEntity.ok(bannerService.getActiveBannersByType(bannerType));
     }
+    
+    // Lấy danh sách tất cả banner (tất cả status)
+    @GetMapping
+    public ResponseEntity<List<BannerResponseDTO>> getAllBanners() {
+        return ResponseEntity.ok(bannerService.getAllBanners());
+    }
 
-    private final BannerService bannerService;
-
-    // Tạo banner (công ty gửi yêu cầu thuê, nhận từng trường qua form-data và file ảnh)
+    // Tạo banner (công ty gửi yêu cầu thuê)
     @PostMapping(consumes = {"multipart/form-data"})
     public ResponseEntity<BannerResponseDTO> createBanner(
             @RequestParam String companyName,
@@ -47,33 +84,74 @@ public class BannerController {
             @RequestParam String bannerType,
             @RequestParam String startDate,
             @RequestParam String endDate,
-            @RequestParam(required = false) String description,
             @RequestParam(value = "bannerImage", required = false) MultipartFile bannerImage
     ) {
-        BannerResponseDTO response = bannerService.createBanner(companyName, companyEmail, companyPhone, bannerType, startDate, endDate, bannerImage, bannerUploadDir);
+        // Upload file ở Controller
+        String imageUrl = fileUploadService.uploadBannerImage(bannerImage, bannerUploadDir);
+        
+        BannerRequestDTO dto = new BannerRequestDTO();
+        dto.setCompanyName(companyName);
+        dto.setCompanyEmail(companyEmail);
+        dto.setCompanyPhone(companyPhone);
+        dto.setBannerType(bannerType);
+        dto.setStartDate(LocalDate.parse(startDate));
+        dto.setEndDate(LocalDate.parse(endDate));
+        dto.setBannerImage(imageUrl);
+        
+        // Trigger validation annotations
+        Set<ConstraintViolation<BannerRequestDTO>> violations = validator.validate(dto);
+        if (!violations.isEmpty()) {
+            String errors = violations.stream()
+                    .map(ConstraintViolation::getMessage)
+                    .collect(Collectors.joining(", "));
+            throw new RuntimeException(errors);
+        }
+        
+        BannerResponseDTO response = bannerService.createBanner(dto);
         return ResponseEntity.ok(response);
     }
 
-    // Lấy danh sách tất cả banner
-    @GetMapping
-    public ResponseEntity<List<BannerResponseDTO>> getAllBanners() {
-        return ResponseEntity.ok(bannerService.getAllBanners());
-    }
-
-    // Cập nhật banner
+    // Cập nhật banner (Phone KHÔNG BẮT BUỘC)
     @PatchMapping(value = "/{id}", consumes = {"multipart/form-data"})
     public ResponseEntity<BannerResponseDTO> updateBanner(
             @PathVariable Long id,
             @RequestParam String companyName,
             @RequestParam String companyEmail,
-            @RequestParam String companyPhone,
+            @RequestParam(required = false) String companyPhone,  // ← OPTIONAL
             @RequestParam String bannerType,
             @RequestParam String startDate,
             @RequestParam String endDate,
             @RequestParam(required = false) String bannerImageOld,
-        @RequestParam(value = "bannerImage", required = false) MultipartFile bannerImage
+            @RequestParam(value = "bannerImage", required = false) MultipartFile bannerImage
     ) {
-        BannerResponseDTO response = bannerService.updateBanner(id, companyName, companyEmail, companyPhone, bannerType, startDate, endDate, bannerImageOld, bannerImage, bannerUploadDir);
+        String imageUrl = bannerImageOld;
+        
+        if (bannerImage != null && !bannerImage.isEmpty()) {
+            // Xóa file cũ
+            fileUploadService.deleteFile(bannerImageOld, bannerUploadDir);
+            // Upload file mới
+            imageUrl = fileUploadService.uploadBannerImage(bannerImage, bannerUploadDir);
+        }
+        
+        BannerUpdateRequestDTO dto = new BannerUpdateRequestDTO();
+        dto.setCompanyName(companyName);
+        dto.setCompanyEmail(companyEmail);
+        dto.setCompanyPhone(companyPhone);  // có thể null
+        dto.setBannerType(bannerType);
+        dto.setStartDate(LocalDate.parse(startDate));
+        dto.setEndDate(LocalDate.parse(endDate));
+        dto.setBannerImage(imageUrl);
+        
+        // Trigger validation annotations
+        Set<ConstraintViolation<BannerUpdateRequestDTO>> violations = validator.validate(dto);
+        if (!violations.isEmpty()) {
+            String errors = violations.stream()
+                    .map(ConstraintViolation::getMessage)
+                    .collect(Collectors.joining(", "));
+            throw new RuntimeException(errors);
+        }
+        
+        BannerResponseDTO response = bannerService.updateBanner(id, dto);
         return ResponseEntity.ok(response);
     }
 
@@ -97,13 +175,5 @@ public class BannerController {
             @RequestParam(required = false) String reason
     ) {
         return ResponseEntity.ok(bannerService.rejectBanner(id, reason));
-    }
-
-
-        // API lấy tất cả banner active, trả về các trường cần thiết
-    @GetMapping("/active-list")
-    public ResponseEntity<List<BannerResponseDTO>> getActiveBannerList() {
-        List<BannerResponseDTO> response = bannerService.getActiveBannerList();
-        return ResponseEntity.ok(response);
     }
 }

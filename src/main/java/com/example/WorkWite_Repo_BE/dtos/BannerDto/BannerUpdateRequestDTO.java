@@ -10,11 +10,11 @@ import lombok.Data;
 import java.time.LocalDate;
 
 /**
- * DTO cho việc TẠO banner mới
- * Tất cả field đều BẮT BUỘC
+ * DTO cho việc CẬP NHẬT banner
+ * Khác với BannerRequestDTO ở chỗ: companyPhone KHÔNG BẮT BUỘC
  */
 @Data
-public class BannerRequestDTO {
+public class BannerUpdateRequestDTO {
     
     @NotBlank(message = "Tên công ty không được để trống")
     private String companyName;
@@ -23,12 +23,12 @@ public class BannerRequestDTO {
     @Email(message = "Email không đúng định dạng")
     private String companyEmail;
     
-    @NotBlank(message = "Số điện thoại không được để trống")
-    @Pattern(regexp = "^[0-9]{10,11}$", message = "Số điện thoại phải là 10-11 chữ số")
+    // OPTIONAL - Có thể null hoặc empty, nhưng nếu có thì phải đúng format
+    @Pattern(regexp = "^$|^[0-9]{10,11}$", message = "Số điện thoại phải là 10-11 chữ số")
     private String companyPhone;
 
     // Thông tin banner
-    private String bannerImage;
+    private String bannerImage;   // Optional - nếu null thì giữ ảnh cũ
     
     @NotNull(message = "Ngày bắt đầu không được để trống")
     private LocalDate startDate;

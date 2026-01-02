@@ -1,6 +1,7 @@
 package com.example.WorkWite_Repo_BE.services;
 
 import com.example.WorkWite_Repo_BE.dtos.BannerDto.BannerRequestDTO;
+import com.example.WorkWite_Repo_BE.dtos.BannerDto.BannerUpdateRequestDTO;
 import com.example.WorkWite_Repo_BE.dtos.BannerDto.BannerResponseDTO;
 import com.example.WorkWite_Repo_BE.dtos.BannerDto.PaginatedBannerResponseDto;
 import com.example.WorkWite_Repo_BE.entities.Banner;
@@ -10,11 +11,11 @@ import com.example.WorkWite_Repo_BE.repositories.BannerRepository;
 import com.example.WorkWite_Repo_BE.repositories.UserJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,9 +50,18 @@ public class BannerService {
         return dto;
     }
 
-    // Trả về danh sách BannerResponseDTO cho các banner ACTIVE, chỉ set các trường cần thiết
-    public List<BannerResponseDTO> getActiveBannerList() {
+    // Trả về danh sách BannerResponseDTO cho các banner ACTIVE
+    // Nếu có bannerType -> lọc theo type, không có -> trả tất cả
+    public List<BannerResponseDTO> getActiveBannerList(String bannerType) {
         List<Banner> activeBanners = getBannersByStatus(BannerStatus.ACTIVE);
+        
+        // Lọc theo bannerType nếu có
+        if (bannerType != null && !bannerType.trim().isEmpty()) {
+            activeBanners = activeBanners.stream()
+                    .filter(b -> b.getBannerType().equalsIgnoreCase(bannerType))
+                    .collect(Collectors.toList());
+        }
+        
         return activeBanners.stream()
                 .map(b -> {
                     BannerResponseDTO dto = new BannerResponseDTO();
@@ -60,88 +70,50 @@ public class BannerService {
                     dto.setEndDate(b.getEndDate());
                     dto.setStatus(b.getStatus() != null ? b.getStatus().name() : null);
                     dto.setBannerImage(b.getBannerImage());
-                    // Có thể set thêm các trường khác nếu cần
+                    dto.setBannerType(b.getBannerType());
                     return dto;
                 })
                 .collect(java.util.stream.Collectors.toList());
     }
-    // New method: handles all business logic and file upload for banner creation
-    public BannerResponseDTO createBanner(String companyName, String companyEmail, String companyPhone, String bannerType, String startDate, String endDate,  org.springframework.web.multipart.MultipartFile bannerImage, String bannerUploadDir) {
-        BannerRequestDTO dto = new BannerRequestDTO();
-        dto.setCompanyName(companyName);
-        dto.setCompanyEmail(companyEmail);
-        dto.setCompanyPhone(companyPhone);
-        dto.setBannerType(bannerType);
-        dto.setStartDate(java.time.LocalDate.parse(startDate));
-        dto.setEndDate(java.time.LocalDate.parse(endDate));
-        if (bannerImage != null && !bannerImage.isEmpty()) {
-            String fileName = System.currentTimeMillis() + "_" + org.springframework.util.StringUtils.cleanPath(bannerImage.getOriginalFilename());
-            try {
-                java.nio.file.Path uploadPath = java.nio.file.Paths.get(bannerUploadDir);
-                if (!java.nio.file.Files.exists(uploadPath)) {
-                    java.nio.file.Files.createDirectories(uploadPath);
-                }
-                try (java.io.InputStream in = bannerImage.getInputStream()) {
-                    java.nio.file.Files.copy(in, uploadPath.resolve(fileName), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                }
-                String baseUrl = org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-                String imageUrl = baseUrl + "/uploads/banners/" + fileName;
-                dto.setBannerImage(imageUrl);
-            } catch (Exception e) {
-                e.printStackTrace();
-                dto.setBannerImage(null);
-            }
-        }
-        return createBanner(dto);
+
+    // Lấy danh sách banner đã được admin DUYỆT (APPROVED) - chờ đến ngày hiển thị
+    public List<BannerResponseDTO> getApprovedBanners() {
+        List<Banner> approvedBanners = getBannersByStatus(BannerStatus.APPROVED);
+        return approvedBanners.stream()
+                .map(b -> {
+                    BannerResponseDTO dto = new BannerResponseDTO();
+                    dto.setCompanyName(b.getCompanyName());
+                    dto.setStartDate(b.getStartDate());
+                    dto.setEndDate(b.getEndDate());
+                    dto.setStatus(b.getStatus() != null ? b.getStatus().name() : null);
+                    dto.setBannerImage(b.getBannerImage());
+                    dto.setBannerType(b.getBannerType());
+                    return dto;
+                })
+                .collect(java.util.stream.Collectors.toList());
     }
 
-    // New method: handles all business logic and file upload for banner update
-    public BannerResponseDTO updateBanner(Long id, String companyName, String companyEmail, String companyPhone, String bannerType, String startDate, String endDate,  String bannerImageOld, org.springframework.web.multipart.MultipartFile bannerImage, String bannerUploadDir) {
-        BannerRequestDTO dto = new BannerRequestDTO();
-        dto.setCompanyName(companyName);
-        dto.setCompanyEmail(companyEmail);
-        dto.setCompanyPhone(companyPhone);
-        dto.setBannerType(bannerType);
-        dto.setStartDate(java.time.LocalDate.parse(startDate));
-        dto.setEndDate(java.time.LocalDate.parse(endDate));
-        if (bannerImage != null && !bannerImage.isEmpty()) {
-            String fileName = System.currentTimeMillis() + "_" + org.springframework.util.StringUtils.cleanPath(bannerImage.getOriginalFilename());
-            try {
-                java.nio.file.Path uploadPath = java.nio.file.Paths.get(bannerUploadDir);
-                if (!java.nio.file.Files.exists(uploadPath)) {
-                    java.nio.file.Files.createDirectories(uploadPath);
-                }
-                try (java.io.InputStream in = bannerImage.getInputStream()) {
-                    java.nio.file.Files.copy(in, uploadPath.resolve(fileName), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                }
-                String baseUrl = org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-                String imageUrl = baseUrl + "/uploads/banners/" + fileName;
-                dto.setBannerImage(imageUrl);
-            } catch (Exception e) {
-                e.printStackTrace();
-                dto.setBannerImage(bannerImageOld); // Nếu lỗi thì giữ ảnh cũ
-            }
-        } else {
-            dto.setBannerImage(bannerImageOld); // Nếu không upload mới thì giữ ảnh cũ
-        }
-        return updateBanner(id, dto);
-    }
     /**
      * Kiểm tra và kích hoạt các banner có startDate <= hiện tại và đang ở trạng thái PENDING
      */
-    public void activateBannersIfNeeded() {
-        List<Banner> banners = bannerRepository.findAll();
-        LocalDateTime now = LocalDateTime.now();
-        for (Banner banner : banners) {
-            if (banner.getStatus() == BannerStatus.PENDING
-                    && banner.getStartDate() != null
-                    && !now.isBefore(banner.getStartDate())) {
-                banner.setStatus(BannerStatus.ACTIVE);
-                banner.setUpdatedAt(now);
-                bannerRepository.save(banner);
-            }
-        }
+
+public void activateBannersIfNeeded() {
+    LocalDateTime now = LocalDateTime.now();
+    
+    // Chỉ query banner cần activate
+    List<Banner> pendingBanners = bannerRepository.findByStatusAndStartDateBefore(
+        BannerStatus.PENDING, now
+    );
+    
+    if (!pendingBanners.isEmpty()) {
+        pendingBanners.forEach(banner -> {
+            banner.setStatus(BannerStatus.ACTIVE);
+            banner.setUpdatedAt(now);
+        });
+        
+        bannerRepository.saveAll(pendingBanners);  // ← Batch update (1 query)
     }
+}
 
 
     // ==========================
@@ -171,9 +143,8 @@ public class BannerService {
     }
 
     public List<BannerResponseDTO> getBannersByUserId(Long userId) {
-        return bannerRepository.findAll()
+        return bannerRepository.findByUserId(userId)
                 .stream()
-                .filter(b -> b.getUser() != null && b.getUser().getId().equals(userId))
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
@@ -200,21 +171,25 @@ public class BannerService {
     // Business Logic
     // ==========================
 
+    @Transactional
     public void expireBannersIfNeeded() {
-        List<Banner> banners = bannerRepository.findAll();
         LocalDateTime now = LocalDateTime.now();
-
-        for (Banner banner : banners) {
-            if (banner.getStatus() == BannerStatus.ACTIVE
-                    && banner.getEndDate() != null
-                    && now.isAfter(banner.getEndDate())) {
+        
+        List<Banner> activeBanners = bannerRepository.findByStatusAndEndDateBefore(
+            BannerStatus.ACTIVE, now
+        );
+        
+        if (!activeBanners.isEmpty()) {
+            activeBanners.forEach(banner -> {
                 banner.setStatus(BannerStatus.EXPIRED);
                 banner.setUpdatedAt(now);
-                bannerRepository.save(banner);
-            }
+            });
+            
+            bannerRepository.saveAll(activeBanners);
         }
     }
 
+    @Transactional
     public BannerResponseDTO approveBanner(Long id) {
         Banner banner = bannerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Banner not found"));
@@ -231,6 +206,7 @@ public class BannerService {
         return toDTO(saved);
     }
 
+    @Transactional
     public BannerResponseDTO rejectBanner(Long id, String reason) {
         Banner banner = bannerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Banner not found"));
@@ -249,12 +225,35 @@ public class BannerService {
         return toDTO(saved);
     }
 
+    @Transactional
     public BannerResponseDTO createBanner(BannerRequestDTO requestDTO) {
+        // Annotation validation đã xử lý: companyName, companyEmail, companyPhone, bannerType
+        
         LocalDate start = requestDTO.getStartDate();
         LocalDate end = requestDTO.getEndDate();
 
-        if (start == null || end == null || end.isBefore(start)) {
-            throw new RuntimeException("Ngày bắt đầu/kết thúc không hợp lệ");
+        // Validate startDate phải >= hôm nay
+        if (start.isBefore(LocalDate.now())) {
+            throw new RuntimeException("Ngày bắt đầu phải từ hôm nay trở đi");
+        }
+        
+        // Validate end date > start date
+        if (end.isBefore(start)) {
+            throw new RuntimeException("Ngày kết thúc phải sau ngày bắt đầu");
+        }
+        
+        // Validate độ dài booking
+        long days = ChronoUnit.DAYS.between(start, end) + 1;
+        if (days < 1) {
+            throw new RuntimeException("Phải thuê ít nhất 1 ngày");
+        }
+        if (days > 365) {
+            throw new RuntimeException("Không thể thuê quá 365 ngày");
+        }
+        
+        // Validate banner image
+        if (requestDTO.getBannerImage() == null || requestDTO.getBannerImage().isEmpty()) {
+            throw new RuntimeException("Banner image is required");
         }
 
         // Lấy user từ JWT
@@ -265,44 +264,33 @@ public class BannerService {
             throw new RuntimeException("User not found");
         }
 
-        // Kiểm tra bannerType
+        // Type đã validate bởi @Pattern annotation
         String type = requestDTO.getBannerType();
-        if (type == null || !(type.equalsIgnoreCase("Vip")
-                || type.equalsIgnoreCase("Featured")
-                || type.equalsIgnoreCase("Standard"))) {
-            throw new RuntimeException("Invalid bannerType. Must be Vip, Featured, or Standard");
-        }
 
-        // Business rule: Giới hạn mỗi công ty chỉ có tối đa 1 booking ACTIVE/PENDING cho 1 slot tại 1 thời điểm (kiểm tra giao nhau thời gian)
-        boolean exists = bannerRepository.findAll().stream()
-                .anyMatch(b -> b.getBannerType() != null && b.getBannerType().equalsIgnoreCase(type)
-                        && b.getUser() != null && b.getUser().getId().equals(user.getId())
-                        && (b.getStatus() == BannerStatus.ACTIVE || b.getStatus() == BannerStatus.PENDING)
-                        && b.getStartDate() != null && b.getEndDate() != null
-                        && !(end.atStartOfDay().isBefore(b.getStartDate()) || start.atStartOfDay().isAfter(b.getEndDate()))
-                );
-        if (exists) {
-            throw new RuntimeException("Bạn đã có booking ở slot này (thời gian bị giao nhau). Vui lòng gia hạn hoặc chờ admin xử lý.");
+        // LOGIC MỚI: Kiểm tra slot đã có người book chưa (BẤT KỊ user nào)
+        LocalDateTime startDateTime = start.atStartOfDay();
+        LocalDateTime endDateTime = end.atTime(23, 59, 59);
+        
+        List<Banner> activeBannersInSlot = bannerRepository.findActiveOrPendingByType(type);
+        
+        boolean slotOccupied = activeBannersInSlot.stream()
+            .anyMatch(b -> b.getStartDate() != null && b.getEndDate() != null
+                && !endDateTime.isBefore(b.getStartDate()) 
+                && !startDateTime.isAfter(b.getEndDate())
+            );
+        
+        if (slotOccupied) {
+            throw new RuntimeException("Slot " + type + " đã có người thuê trong khoảng thời gian này. Vui lòng chọn thời gian khác.");
         }
 
         // Xác định giá theo loại banner
         final long USD_TO_VND = 26410;
-        long pricePerDay = switch (type.toLowerCase()) {
-            case "vip" -> 3 * USD_TO_VND;
-            case "featured" -> 2 * USD_TO_VND;
-            default -> 1 * USD_TO_VND;
-        };
-
-        long days = ChronoUnit.DAYS.between(start, end) + 1;
-        if (days <= 0) {
-            throw new RuntimeException("Số ngày thuê phải lớn hơn 0");
-        }
-
+        long pricePerDay = getPricePerDay(type, USD_TO_VND);
         long totalPrice = pricePerDay * days;
 
         // Kiểm tra số dư
         if (user.getBalance() == null || user.getBalance() < totalPrice) {
-            throw new RuntimeException("Số dư không đủ để thuê banner");
+            throw new RuntimeException("Số dư không đủ để thuê banner. Cần: " + totalPrice + " VND");
         }
 
         // Trừ tiền
@@ -315,11 +303,10 @@ public class BannerService {
         banner.setCompanyEmail(requestDTO.getCompanyEmail());
         banner.setCompanyPhone(requestDTO.getCompanyPhone());
         banner.setBannerImage(requestDTO.getBannerImage());
-        banner.setStartDate(start.atStartOfDay());
-        banner.setEndDate(end.atStartOfDay());
+        banner.setStartDate(startDateTime);
+        banner.setEndDate(endDateTime);
         banner.setAmount(totalPrice);
         banner.setBannerType(type);
-        // Luôn set trạng thái PENDING khi tạo mới, không tự động duyệt
         banner.setStatus(BannerStatus.PENDING);
         banner.setCreatedAt(LocalDateTime.now());
         banner.setUpdatedAt(LocalDateTime.now());
@@ -336,21 +323,133 @@ public class BannerService {
     public void deleteBanner(Long id) {
         bannerRepository.deleteById(id);
     }
+    
+    // ==========================
+    // Helper Methods
+    // ==========================
+    
+    private long getPricePerDay(String bannerType, long usdToVnd) {
+        return switch (bannerType.toLowerCase()) {
+            case "vip" -> 3 * usdToVnd;
+            case "featured" -> 2 * usdToVnd;
+            default -> 1 * usdToVnd;
+        };
+    }
 
-    public BannerResponseDTO updateBanner(Long id, BannerRequestDTO requestDTO) {
+    @Transactional
+    public BannerResponseDTO updateBanner(Long id, BannerUpdateRequestDTO requestDTO) {
         Banner banner = bannerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Banner not found"));
-
+        
+        // Chỉ cho phép update banner PENDING hoặc APPROVED (chưa active)
+        if (banner.getStatus() == BannerStatus.ACTIVE 
+            || banner.getStatus() == BannerStatus.EXPIRED
+            || banner.getStatus() == BannerStatus.REJECTED) {
+            throw new RuntimeException("Không thể sửa banner đã active/expired/rejected");
+        }
+        
+        // Annotation validation đã xử lý: companyName, companyEmail, phone (optional), bannerType
+        
+        LocalDate newStart = requestDTO.getStartDate();
+        LocalDate newEnd = requestDTO.getEndDate();
+        String newType = requestDTO.getBannerType();
+        
+        // Validate startDate phải >= hôm nay
+        if (newStart.isBefore(LocalDate.now())) {
+            throw new RuntimeException("Ngày bắt đầu phải từ hôm nay trở đi");
+        }
+        
+        // Validate end date > start date
+        if (newEnd.isBefore(newStart)) {
+            throw new RuntimeException("Ngày kết thúc phải sau ngày bắt đầu");
+        }
+        
+        // Type đã validate bởi @Pattern annotation
+        
+        // Tính tiền cũ và mới
+        final long USD_TO_VND = 26410;
+        long oldDays = ChronoUnit.DAYS.between(
+            banner.getStartDate().toLocalDate(), 
+            banner.getEndDate().toLocalDate()
+        ) + 1;
+        long oldPricePerDay = getPricePerDay(banner.getBannerType(), USD_TO_VND);
+        long oldTotal = oldPricePerDay * oldDays;
+        
+        long newDays = ChronoUnit.DAYS.between(newStart, newEnd) + 1;
+        if (newDays < 1) {
+            throw new RuntimeException("Phải thuê ít nhất 1 ngày");
+        }
+        if (newDays > 365) {
+            throw new RuntimeException("Không thể thuê quá 365 ngày");
+        }
+        
+        long newPricePerDay = getPricePerDay(newType, USD_TO_VND);
+        long newTotal = newPricePerDay * newDays;
+        
+        User user = banner.getUser();
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+        
+        long difference = newTotal - oldTotal;
+        
+        if (difference > 0) {
+            // Cần trả thêm tiền
+            if (user.getBalance() == null || user.getBalance() < difference) {
+                throw new RuntimeException("Số dư không đủ để update banner. Cần thêm: " + difference + " VND");
+            }
+            user.setBalance(user.getBalance() - difference);
+            banner.setAmount(newTotal);
+        } else if (difference < 0) {
+            // Hoàn lại tiền
+            user.setBalance(user.getBalance() + Math.abs(difference));
+            banner.setAmount(newTotal);
+        }
+        
+        userJpaRepository.save(user);
+        
+        // Kiểm tra trùng slot (nếu thay đổi thời gian hoặc type)
+        if (!newStart.equals(banner.getStartDate().toLocalDate()) 
+            || !newEnd.equals(banner.getEndDate().toLocalDate())
+            || !newType.equalsIgnoreCase(banner.getBannerType())) {
+            
+            LocalDateTime startDateTime = newStart.atStartOfDay();
+            LocalDateTime endDateTime = newEnd.atTime(23, 59, 59);
+            
+            List<Banner> activeBannersInSlot = bannerRepository.findActiveOrPendingByType(newType);
+            
+            boolean slotOccupied = activeBannersInSlot.stream()
+                .filter(b -> !b.getId().equals(id))  // Bỏ qua chính banner này
+                .anyMatch(b -> b.getStartDate() != null && b.getEndDate() != null
+                    && !endDateTime.isBefore(b.getStartDate()) 
+                    && !startDateTime.isAfter(b.getEndDate())
+                );
+            
+            if (slotOccupied) {
+                throw new RuntimeException("Slot đã có người thuê trong thời gian mới");
+            }
+        }
+        
+        // Update thông tin
         banner.setCompanyName(requestDTO.getCompanyName());
         banner.setCompanyEmail(requestDTO.getCompanyEmail());
-        banner.setCompanyPhone(requestDTO.getCompanyPhone());
-        banner.setBannerImage(requestDTO.getBannerImage());
-        banner.setStartDate(requestDTO.getStartDate() != null ? requestDTO.getStartDate().atStartOfDay() : null);
-        banner.setEndDate(requestDTO.getEndDate() != null ? requestDTO.getEndDate().atStartOfDay() : null);
-        banner.setBannerType(requestDTO.getBannerType());
+        
+        // Phone optional - chỉ update nếu có giá trị
+        if (requestDTO.getCompanyPhone() != null && !requestDTO.getCompanyPhone().trim().isEmpty()) {
+            banner.setCompanyPhone(requestDTO.getCompanyPhone());
+        }
+        // Nếu null hoặc empty → giữ nguyên phone cũ
+        
+        // Banner image optional - chỉ update nếu có
+        if (requestDTO.getBannerImage() != null && !requestDTO.getBannerImage().isEmpty()) {
+            banner.setBannerImage(requestDTO.getBannerImage());
+        }
+        banner.setStartDate(newStart.atStartOfDay());
+        banner.setEndDate(newEnd.atTime(23, 59, 59));
+        banner.setBannerType(newType);
         banner.setStatus(BannerStatus.PENDING);
         banner.setUpdatedAt(LocalDateTime.now());
-
+        
         Banner saved = bannerRepository.save(banner);
         return toDTO(saved);
     }

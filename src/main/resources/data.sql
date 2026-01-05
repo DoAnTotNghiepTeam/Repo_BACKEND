@@ -87,3 +87,23 @@ WHERE
             user_id = u.id
             AND role_id = r.id
     );
+
+# -- Migration: Update CV_REVIEW to CV_PASSED
+# UPDATE applicants
+# SET application_status = 'CV_PASSED'
+# WHERE application_status = 'CV_REVIEW';
+
+-- Bước 1: Thêm CV_PASSED vào enum (giữ cả CV_REVIEW)
+ALTER TABLE applicant_history 
+MODIFY COLUMN status 
+ENUM('PENDING','CV_REVIEW','CV_PASSED','INTERVIEW','OFFER','HIRED','REJECTED') NOT NULL;
+
+-- Bước 2: Update dữ liệu cũ
+UPDATE applicant_history 
+SET status = 'CV_PASSED' 
+WHERE status = 'CV_REVIEW';
+
+-- Bước 3: Xóa CV_REVIEW khỏi enum
+ALTER TABLE applicant_history 
+MODIFY COLUMN status 
+ENUM('PENDING','CV_PASSED','INTERVIEW','OFFER','HIRED','REJECTED') NOT NULL;

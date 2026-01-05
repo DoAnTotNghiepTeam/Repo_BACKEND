@@ -50,6 +50,7 @@ public class ApplicantService {
     private final EmailService emailService;
     private final EmailTemplateHelper emailTemplateHelper;
     private final InterviewScheduleRepository interviewScheduleRepository;
+    private final NotificationService notificationService;
 
 
 //    // ApplicantService.java
@@ -108,10 +109,9 @@ public ApplicantResponseDto updateApplicantStatus(Long applicantId, ApplicantSta
 
     // === RÀNG BUỘC TRẠNG THÁI ===
     Map<ApplicationStatus, List<ApplicationStatus>> allowedNextStatus = Map.of(
-            ApplicationStatus.PENDING, List.of(ApplicationStatus.CV_REVIEW),
-            ApplicationStatus.CV_REVIEW, List.of(ApplicationStatus.INTERVIEW, ApplicationStatus.REJECTED),
-            ApplicationStatus.INTERVIEW, List.of(ApplicationStatus.OFFER, ApplicationStatus.REJECTED),
-            ApplicationStatus.OFFER, List.of(ApplicationStatus.HIRED, ApplicationStatus.REJECTED),
+            ApplicationStatus.PENDING, List.of(ApplicationStatus.CV_PASSED),
+            ApplicationStatus.CV_PASSED, List.of(ApplicationStatus.INTERVIEW, ApplicationStatus.REJECTED),
+            ApplicationStatus.INTERVIEW, List.of(ApplicationStatus.HIRED, ApplicationStatus.REJECTED),
             ApplicationStatus.HIRED, List.of(),
             ApplicationStatus.REJECTED, List.of()
     );
@@ -141,6 +141,9 @@ public ApplicantResponseDto updateApplicantStatus(Long applicantId, ApplicantSta
     // Push realtime SSE cho ứng viên
     sseService.sendEvent(applicantId, "statusUpdated", dto);
 
+    // ✅ Tạo thông báo trong hệ thống cho ứng viên
+    notificationService.createStatusUpdateNotification(applicant, newStatus, request.getNote());
+
     // Gửi mail cho ứng viên
     String candidateEmail = applicant.getCandidate().getUser().getEmail();
     String candidateName = applicant.getResume() != null ? applicant.getResume().getFullName() : "Ứng viên";
@@ -168,9 +171,10 @@ public ApplicantResponseDto updateApplicantStatus(Long applicantId, ApplicantSta
 
     } else {
         // Mail update status bình thường
-        String subject = "Cập nhật trạng thái đơn ứng tuyển";
+        String companyName = applicant.getJobPosting().getEmployer().getCompanyInformation().getCompanyName();
+        String subject = "🔔 " + companyName + " - Cập nhật: " + jobTitle;
         String content = emailTemplateHelper.buildStatusUpdateEmail(
-                candidateName, jobTitle, newStatus.name(), request.getNote(), applicant.getId()
+                candidateName, jobTitle, companyName, newStatus.name(), request.getNote(), applicant.getId()
         );
         emailService.sendEmail(candidateEmail, subject, content);
     }
@@ -301,7 +305,7 @@ public ApplicantResponseDto updateApplicantStatus(Long applicantId, ApplicantSta
                 .isSkillQualified(app.getIsSkillQualified())          // ✅ map field mới
                 .isExperienceQualified(app.getIsExperienceQualified())
                 .skillMatchMessage(app.getSkillMatchMessage())
-                .isRead(false)
+                .isRead(app.getIsRead() != null ? app.getIsRead() : false)
                 .build();
     }
 
@@ -730,10 +734,14 @@ public ApplicantResponseDto updateApplicantStatus(Long applicantId, ApplicantSta
             String candidateEmail = applicant.getCandidate().getUser().getEmail();
             String candidateName = applicant.getResume() != null ? applicant.getResume().getFullName() : "Ứng viên";
             String jobTitle = applicant.getJobPosting().getTitle();
+            String companyName = applicant.getJobPosting().getEmployer().getCompanyInformation().getCompanyName();
 
-            String subjectCandidate = "Xác nhận ứng tuyển thành công";
-            String contentCandidate = emailTemplateHelper.buildApplySuccessEmail(candidateName, jobTitle, applicant.getId());
-            emailService.sendEmail(candidateEmail, subjectCandidate, contentCandidate);
+            String subjectCandidate = "✅ " + companyName + " - Xác nhận ứng tuyển: " + jobTitle;
+            String contentCandidate = emailTemplateHelper.buildApplySuccessEmail(candidateName, jobTitle, companyName, applicant.getId());
+           emailService.sendEmail(candidateEmail, subjectCandidate, contentCandidate);  
+
+            // ✅ Tạo thông báo xác nhận ứng tuyển cho Candidate
+            notificationService.createApplySuccessNotification(applicant);
 
 // Gửi mail cho Employer
             Employers employer = applicant.getJobPosting().getEmployer();
@@ -742,7 +750,10 @@ public ApplicantResponseDto updateApplicantStatus(Long applicantId, ApplicantSta
 
             String subjectEmployer = "Có ứng viên mới ứng tuyển vào công việc " + jobTitle;
             String contentEmployer = emailTemplateHelper.buildNewApplicantEmail(employerName, jobTitle, candidateName, applicant.getId());
-            emailService.sendEmail(employerEmail, subjectEmployer, contentEmployer);
+           emailService.sendEmail(employerEmail, subjectEmployer, contentEmployer);  
+
+            // ✅ Tạo thông báo cho Employer
+            notificationService.createNewApplicantNotification(applicant);
 
             logHistory(applicant, ApplicationStatus.PENDING, "Candidates who have just applied for the job");
         } catch (DataIntegrityViolationException ex) {
@@ -753,9 +764,6 @@ public ApplicantResponseDto updateApplicantStatus(Long applicantId, ApplicantSta
 
         log.info("Ứng viên {} apply thành công vào job {} (match skill: {}%, exp {} năm)",
                 candidateId, jobId, skillMatchPercent, totalExpYears);
-
-        // Gửi notification (mock)
-        log.info("Gửi thông báo tới Employer {}: Ứng viên {} vừa apply job {}", jobPosting.getEmployer().getId(), candidateId, jobId);
 
         ApplicantResponseDto dto = convertToDto(applicant);
         // ✅ Bọc response
@@ -797,10 +805,19 @@ public ApplicantResponseDto updateApplicantStatus(Long applicantId, ApplicantSta
         Applicant applicant = applicantRepository.findById(applicantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
         if (!applicant.getCandidate().getId().equals(candidateId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không có quyền xóa");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to delete this application");
         }
-        deleteResume(applicant.getResumeLink());
         applicantRepository.delete(applicant);
+    }
+
+    // Đánh dấu đã đọc
+    @Transactional
+    public void markAsRead(Long applicantId) {
+        Applicant applicant = applicantRepository.findById(applicantId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+        
+        applicant.setIsRead(true);
+        applicantRepository.save(applicant);
     }
 
     private void validateFile(MultipartFile file) {

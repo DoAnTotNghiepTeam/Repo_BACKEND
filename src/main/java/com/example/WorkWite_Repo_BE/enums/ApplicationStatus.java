@@ -3,9 +3,8 @@ package com.example.WorkWite_Repo_BE.enums;
 public enum ApplicationStatus {
     PENDING,
 //    APPLIED,
-    CV_REVIEW,
+    CV_PASSED,
     INTERVIEW,
-    OFFER,
     HIRED,
     REJECTED;
 
@@ -14,9 +13,8 @@ public enum ApplicationStatus {
         String normalized = step.trim().toUpperCase().replace(" ", "_");
         return switch (normalized) {
 //            case "APPLIED" -> APPLIED;
-            case "CV_REVIEW" -> CV_REVIEW;
+            case "CV_PASSED" -> CV_PASSED;
             case "INTERVIEW" -> INTERVIEW;
-            case "OFFER" -> OFFER;
             case "HIRED" -> HIRED;
             case "REJECTED" -> REJECTED;
             default -> PENDING; // fallback

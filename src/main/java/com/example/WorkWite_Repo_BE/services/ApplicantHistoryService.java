@@ -39,9 +39,8 @@ public class ApplicantHistoryService {
         // Thứ tự chuẩn các bước
         List<ApplicationStatus> orderedSteps = List.of(
                 ApplicationStatus.PENDING,
-                ApplicationStatus.CV_REVIEW,
+                ApplicationStatus.CV_PASSED,
                 ApplicationStatus.INTERVIEW,
-                ApplicationStatus.OFFER,
                 ApplicationStatus.HIRED,
                 ApplicationStatus.REJECTED
         );

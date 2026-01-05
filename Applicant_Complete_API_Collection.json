@@ -1,0 +1,818 @@
+{
+	"info": {
+		"name": "Applicant API - Complete Collection",
+		"description": "Complete Postman collection for all Applicant endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{accessToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "candidateId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "employerId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "jobId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "applicantId",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login Candidate",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+									"    pm.collectionVariables.set('candidateId', response.data.candidate.id);",
+									"    console.log('Candidate logged in, token saved');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"candidate@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Employer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+									"    pm.collectionVariables.set('employerId', response.data.employer.id);",
+									"    console.log('Employer logged in, token saved');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"employer@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Apply Job",
+			"item": [
+				{
+					"name": "Preview Application",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "coverLetter",
+									"value": "Tôi rất quan tâm đến vị trí này và tin rằng kinh nghiệm của tôi phù hợp với yêu cầu công việc.",
+									"type": "text"
+								},
+								{
+									"key": "resume",
+									"type": "file",
+									"src": "/path/to/resume.pdf"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant/{{jobId}}/preview",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant", "{{jobId}}", "preview"]
+						},
+						"description": "Preview application before submitting"
+					},
+					"response": []
+				},
+				{
+					"name": "Apply to Job",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('applicantId', response.data.id);",
+									"    console.log('Applied successfully, applicantId: ' + response.data.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "coverLetter",
+									"value": "Tôi rất quan tâm đến vị trí này và tin rằng kinh nghiệm của tôi phù hợp với yêu cầu công việc. Tôi đã có 3 năm kinh nghiệm làm việc trong lĩnh vực này.",
+									"type": "text"
+								},
+								{
+									"key": "resume",
+									"type": "file",
+									"src": "/path/to/resume.pdf",
+									"description": "Upload resume file (PDF, DOC, DOCX)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant/{{jobId}}/apply",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant", "{{jobId}}", "apply"]
+						},
+						"description": "Apply to a job with cover letter and resume"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Candidate - My Applications",
+			"item": [
+				{
+					"name": "Get All My Applications (Paginated)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant?page=0&size=6&sortBy=appliedAt&sortDir=desc",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Page number (0-indexed)"
+								},
+								{
+									"key": "size",
+									"value": "6",
+									"description": "Items per page"
+								},
+								{
+									"key": "sortBy",
+									"value": "appliedAt",
+									"description": "Sort field: appliedAt, status, etc."
+								},
+								{
+									"key": "sortDir",
+									"value": "desc",
+									"description": "Sort direction: asc or desc"
+								}
+							]
+						},
+						"description": "Get all applications of the logged-in candidate with pagination"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Applicant Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant/detail/{{applicantId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant", "detail", "{{applicantId}}"]
+						},
+						"description": "Get detailed information about a specific application"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Applicant Tracking",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant/{{applicantId}}/tracking",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant", "{{applicantId}}", "tracking"]
+						},
+						"description": "Get complete tracking info including detail, history, and timeline"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Applicant Timeline",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant/{{applicantId}}/timeline",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant", "{{applicantId}}", "timeline"]
+						},
+						"description": "Get timeline of status changes for an application"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Applicant History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant/{{applicantId}}/history",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant", "{{applicantId}}", "history"]
+						},
+						"description": "Get history of all changes for an application"
+					},
+					"response": []
+				},
+				{
+					"name": "Subscribe to Status Updates (SSE)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant/{{applicantId}}/subscribe",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant", "{{applicantId}}", "subscribe"]
+						},
+						"description": "Subscribe to real-time status updates via Server-Sent Events"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete My Application",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant/delete/{{applicantId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant", "delete", "{{applicantId}}"]
+						},
+						"description": "Delete an application (candidate can delete their own application)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Employer - Manage Applications",
+			"item": [
+				{
+					"name": "Get Applicants by Filter",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant/{{employerId}}/filter?period=week&page=0&size=10&jobPostingId=&status=",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant", "{{employerId}}", "filter"],
+							"query": [
+								{
+									"key": "period",
+									"value": "week",
+									"description": "Filter period: week, month, or custom"
+								},
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Page number"
+								},
+								{
+									"key": "size",
+									"value": "10",
+									"description": "Items per page"
+								},
+								{
+									"key": "jobPostingId",
+									"value": "",
+									"description": "Optional: Filter by specific job posting"
+								},
+								{
+									"key": "status",
+									"value": "",
+									"description": "Optional: Filter by status (CV_PASSED, INTERVIEW, HIRED, REJECTED)"
+								},
+								{
+									"key": "startDate",
+									"value": "",
+									"description": "Optional: Custom start date (ISO format)",
+									"disabled": true
+								},
+								{
+									"key": "endDate",
+									"value": "",
+									"description": "Optional: Custom end date (ISO format)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Filter applicants by employer, period, job posting, and status"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Applicants This Week",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant/{{employerId}}/filter?period=week&page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant", "{{employerId}}", "filter"],
+							"query": [
+								{
+									"key": "period",
+									"value": "week"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get all applicants from this week"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Applicants This Month",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant/{{employerId}}/filter?period=month&page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant", "{{employerId}}", "filter"],
+							"query": [
+								{
+									"key": "period",
+									"value": "month"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get all applicants from this month"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Applicants by Job Posting",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant/{{employerId}}/filter?jobPostingId={{jobId}}&page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant", "{{employerId}}", "filter"],
+							"query": [
+								{
+									"key": "jobPostingId",
+									"value": "{{jobId}}"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get all applicants for a specific job posting"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Applicants by Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant/{{employerId}}/filter?status=CV_PASSED&page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant", "{{employerId}}", "filter"],
+							"query": [
+								{
+									"key": "status",
+									"value": "CV_PASSED",
+									"description": "Options: CV_PASSED, INTERVIEW, HIRED, REJECTED"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get all applicants with specific status"
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Application as Read",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant/{{applicantId}}/mark-read",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant", "{{applicantId}}", "mark-read"]
+						},
+						"description": "Mark an application as read by employer"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Resume Management",
+			"item": [
+				{
+					"name": "Preview Resume from URL",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/applicant/resume-preview?url=https://firebasestorage.googleapis.com/...",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "applicant", "resume-preview"],
+							"query": [
+								{
+									"key": "url",
+									"value": "https://firebasestorage.googleapis.com/...",
+									"description": "Full Firebase Storage URL of the resume"
+								}
+							]
+						},
+						"description": "Preview resume PDF from Firebase Storage URL"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Test Workflows",
+			"item": [
+				{
+					"name": "Complete Flow - Candidate Apply",
+					"item": [
+						{
+							"name": "1. Login as Candidate",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Login successful', function() {",
+											"    pm.response.to.have.status(200);",
+											"    const response = pm.response.json();",
+											"    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+											"    pm.collectionVariables.set('candidateId', response.data.candidate.id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"candidate@example.com\",\n  \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/auth/login",
+									"host": ["{{baseUrl}}"],
+									"path": ["api", "auth", "login"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "2. Preview Application",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "coverLetter",
+											"value": "Test cover letter",
+											"type": "text"
+										},
+										{
+											"key": "resume",
+											"type": "file",
+											"src": "/path/to/resume.pdf"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/applicant/{{jobId}}/preview",
+									"host": ["{{baseUrl}}"],
+									"path": ["api", "applicant", "{{jobId}}", "preview"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "3. Apply to Job",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Application submitted', function() {",
+											"    pm.response.to.have.status(201);",
+											"    const response = pm.response.json();",
+											"    pm.collectionVariables.set('applicantId', response.data.id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "coverLetter",
+											"value": "I am very interested in this position",
+											"type": "text"
+										},
+										{
+											"key": "resume",
+											"type": "file",
+											"src": "/path/to/resume.pdf"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/applicant/{{jobId}}/apply",
+									"host": ["{{baseUrl}}"],
+									"path": ["api", "applicant", "{{jobId}}", "apply"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "4. View My Applications",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/applicant?page=0&size=10",
+									"host": ["{{baseUrl}}"],
+									"path": ["api", "applicant"],
+									"query": [
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "size",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "5. Track Application Status",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/applicant/{{applicantId}}/tracking",
+									"host": ["{{baseUrl}}"],
+									"path": ["api", "applicant", "{{applicantId}}", "tracking"]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Complete Flow - Employer Review",
+					"item": [
+						{
+							"name": "1. Login as Employer",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Login successful', function() {",
+											"    pm.response.to.have.status(200);",
+											"    const response = pm.response.json();",
+											"    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+											"    pm.collectionVariables.set('employerId', response.data.employer.id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"employer@example.com\",\n  \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/auth/login",
+									"host": ["{{baseUrl}}"],
+									"path": ["api", "auth", "login"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "2. View All Applicants",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/applicant/{{employerId}}/filter?period=week&page=0&size=10",
+									"host": ["{{baseUrl}}"],
+									"path": ["api", "applicant", "{{employerId}}", "filter"],
+									"query": [
+										{
+											"key": "period",
+											"value": "week"
+										},
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "size",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "3. View Applicant Detail",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/applicant/detail/{{applicantId}}",
+									"host": ["{{baseUrl}}"],
+									"path": ["api", "applicant", "detail", "{{applicantId}}"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "4. Mark as Read",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/applicant/{{applicantId}}/mark-read",
+									"host": ["{{baseUrl}}"],
+									"path": ["api", "applicant", "{{applicantId}}", "mark-read"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "5. Preview Resume",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/applicant/resume-preview?url=",
+									"host": ["{{baseUrl}}"],
+									"path": ["api", "applicant", "resume-preview"],
+									"query": [
+										{
+											"key": "url",
+											"value": "",
+											"description": "Get URL from applicant detail response"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	]
+}

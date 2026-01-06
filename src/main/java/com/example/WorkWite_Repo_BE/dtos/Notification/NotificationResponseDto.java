@@ -22,4 +22,5 @@ public class NotificationResponseDto {
     private Long applicantId;
     private String jobTitle;
     private String companyName;
+    private Long jobId;
 }

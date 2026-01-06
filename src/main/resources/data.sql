@@ -89,9 +89,9 @@ WHERE
     );
 
 # -- Migration: Update CV_REVIEW to CV_PASSED
-# UPDATE applicants
-# SET application_status = 'CV_PASSED'
-# WHERE application_status = 'CV_REVIEW';
+UPDATE applicants
+SET application_status = 'CV_PASSED'
+WHERE application_status = 'CV_REVIEW';
 
 -- Bước 1: Thêm CV_PASSED vào enum (giữ cả CV_REVIEW)
 ALTER TABLE applicant_history 

@@ -164,7 +164,7 @@ public ResponseEntity<byte[]> previewResume(@RequestParam String url) {
                 .body(null);
     }
 }
-    // Delete applicant
+    // Delete applicant  
     @DeleteMapping("/delete/{applicantId}")
     public ResponseEntity<Void> deleteApplicant(@PathVariable Long applicantId) {
         applicantService.deleteApplicant(applicantId);

@@ -216,4 +216,18 @@ public class EmployersService {
         employersJpaRepository.delete(employer);
     }
 
+    public String getCompanyNameByEmployerId(Long employerId) {
+        Employers employer = employersJpaRepository.findById(employerId)
+                .orElseThrow(() -> new RuntimeException("Employer not found"));
+
+        CompanyInformation companyInformation = employer.getCompanyInformation();
+        if (companyInformation == null) {
+            throw new RuntimeException("Company information not found");
+        }
+
+        return companyInformation.getCompanyName();
+    }
+
+
+
 }

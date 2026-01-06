@@ -89,6 +89,13 @@ public class EmployersControler {
 
         return ResponseEntity.ok("Đã gửi yêu cầu, vui lòng chờ duyệt!");
     }
+    @GetMapping("/{employerId}/company")
+    public ResponseEntity<String> getCompanyName(
+            @PathVariable Long employerId) {
+        return ResponseEntity.ok(
+                employersService.getCompanyNameByEmployerId(employerId)
+        );
+    }
 
 
 

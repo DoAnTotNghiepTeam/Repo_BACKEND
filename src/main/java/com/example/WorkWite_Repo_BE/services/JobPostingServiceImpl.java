@@ -194,6 +194,78 @@ public class JobPostingServiceImpl implements JobPostingService {
             throw new RuntimeException("Forbidden: Only the owner employer can update this job posting");
         }
 
+        // ============ TÍNH LẠI TIỀN KHI THAY ĐỔI NGÀY THUÊ HOẶC LOẠI BÀI ĐĂNG ============
+        final long VND_RATE = 26380L;
+        LocalDateTime oldCreatedAt = jobPosting.getCreatedAt();
+        LocalDateTime oldEndAt = jobPosting.getEndAt();
+        String oldPostType = jobPosting.getPostType() != null ? jobPosting.getPostType() : "NORMAL";
+        
+        // Xác định giá cũ
+        double oldPricePerDayUSD = oldPostType.equalsIgnoreCase("VIP") ? 2.0 : 1.0;
+        long oldDays = 1;
+        if (oldEndAt != null && oldCreatedAt != null && oldEndAt.isAfter(oldCreatedAt)) {
+            oldDays = java.time.Duration.between(oldCreatedAt, oldEndAt).toDays();
+            if (oldDays < 1) oldDays = 1;
+        }
+        long oldTotalVND = (long)(oldPricePerDayUSD * oldDays * VND_RATE);
+        
+        // Xác định giá mới
+        LocalDateTime newEndAt = updateDTO.getEndAt() != null ? updateDTO.getEndAt() : oldEndAt;
+        String newPostType = updateDTO.getPostType() != null ? updateDTO.getPostType() : oldPostType;
+        
+        double newPricePerDayUSD = newPostType.equalsIgnoreCase("VIP") ? 2.0 : 1.0;
+        long newDays = 1;
+        if (newEndAt != null && oldCreatedAt != null && newEndAt.isAfter(oldCreatedAt)) {
+            newDays = java.time.Duration.between(oldCreatedAt, newEndAt).toDays();
+            if (newDays < 1) newDays = 1;
+        }
+        long newTotalVND = (long)(newPricePerDayUSD * newDays * VND_RATE);
+        
+        // Tính chênh lệch
+        long difference = newTotalVND - oldTotalVND;
+        
+        Long userId = jobPosting.getEmployer().getUser().getId();
+        
+        if (difference > 0) {
+            // Cần trả thêm tiền
+            Long currentBalance = userBalanceService.getBalance(userId);
+            if (currentBalance == null || currentBalance < difference) {
+                throw new com.example.WorkWite_Repo_BE.exceptions.BusinessException(
+                    "Số dư không đủ để update job posting. Cần thêm: " + difference + " VND (Tiền cũ: " 
+                    + oldTotalVND + ", Tiền mới: " + newTotalVND + ")"
+                );
+            }
+            userBalanceService.subtractBalance(userId, difference);
+            jobPosting.setPostPrice(newTotalVND);
+            
+            systemLogService.saveLog(
+                userId,
+                actor,
+                "UPDATE_JOB_PAY_MORE",
+                "Employer updated job posting and paid additional: " + difference + " VND for job: " + jobPosting.getTitle() 
+                + " | Old: " + oldPostType + " " + oldDays + " days (" + oldTotalVND + " VND)"
+                + " | New: " + newPostType + " " + newDays + " days (" + newTotalVND + " VND)",
+                "SUCCESS"
+            );
+        } else if (difference < 0) {
+            // Hoàn lại tiền
+            userBalanceService.addBalance(userId, Math.abs(difference));
+            jobPosting.setPostPrice(newTotalVND);
+            
+            systemLogService.saveLog(
+                userId,
+                actor,
+                "UPDATE_JOB_REFUND",
+                "Employer updated job posting and got refund: " + Math.abs(difference) + " VND for job: " + jobPosting.getTitle()
+                + " | Old: " + oldPostType + " " + oldDays + " days (" + oldTotalVND + " VND)"
+                + " | New: " + newPostType + " " + newDays + " days (" + newTotalVND + " VND)",
+                "SUCCESS"
+            );
+        }
+        // Nếu difference == 0: Không thay đổi tiền, không cần log
+        
+        // ============ CẬP NHẬT CÁC TRƯỜNG THÔNG TIN ============
+
         // Update fields
         if (updateDTO.getEmployerId() != null) {
             Employers employer = employerRepository.findById(updateDTO.getEmployerId())
@@ -211,15 +283,18 @@ public class JobPostingServiceImpl implements JobPostingService {
         if (updateDTO.getRequiredDegree() != null) jobPosting.setRequiredDegree(updateDTO.getRequiredDegree());
         if (updateDTO.getEndAt() != null) jobPosting.setEndAt(updateDTO.getEndAt());
         if (updateDTO.getStatus() != null) jobPosting.setStatus(updateDTO.getStatus());
+        if (updateDTO.getPostType() != null) jobPosting.setPostType(updateDTO.getPostType());
 
-        // Ghi log
-        systemLogService.saveLog(
-                jobPosting.getEmployer().getUser().getId(),
-                actor,
-                "UPDATE_JOB",
-                "Employer updated job: " + jobPosting.getTitle(),
-                "SUCCESS"
-        );
+        // Ghi log cơ bản (nếu không có thay đổi tiền)
+        if (difference == 0) {
+            systemLogService.saveLog(
+                    userId,
+                    actor,
+                    "UPDATE_JOB",
+                    "Employer updated job: " + jobPosting.getTitle(),
+                    "SUCCESS"
+            );
+        }
 
         JobPosting updatedJobPosting = jobPostingRepository.save(jobPosting);
         return mapToResponseDTO(updatedJobPosting);

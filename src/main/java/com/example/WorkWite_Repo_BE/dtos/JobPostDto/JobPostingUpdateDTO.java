@@ -33,4 +33,6 @@ public class JobPostingUpdateDTO {
     private java.time.LocalDateTime endAt;
 
     private String status;
+    
+    private String postType; // NORMAL hoặc VIP - cho phép đổi loại bài đăng khi update
 }

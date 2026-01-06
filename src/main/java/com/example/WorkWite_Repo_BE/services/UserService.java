@@ -96,4 +96,9 @@ public class UserService {
         );
         return convertToDto(user);
     }
+    public boolean isPending(Long userId) {
+        return userJpaRepository.findById(userId)
+                .map(user -> "PENDING".equalsIgnoreCase(user.getStatus()))
+                .orElse(false);
+    }
 }

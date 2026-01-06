@@ -75,4 +75,9 @@ public class UserController {
         employersService.rejectUpgrade(userId);
         return ResponseEntity.ok("Rejected");
     }
+    @GetMapping("/{id}/is-pending")
+    public ResponseEntity<Boolean> isUserPending(@PathVariable Long id) {
+        boolean result = userService.isPending(id);
+        return ResponseEntity.ok(result);
+    }
 }

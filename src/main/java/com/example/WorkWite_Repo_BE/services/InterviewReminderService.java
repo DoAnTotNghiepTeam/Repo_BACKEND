@@ -23,13 +23,13 @@ public class InterviewReminderService {
     private final EmailService emailService;
     private final EmailTemplateHelper emailTemplateHelper;
 
-    // Chạy mỗi 30 giây
-    @Scheduled(fixedRate = 30_000)
+    // Chạy mỗi ngày 2 lần: 8h và 20h
+    @Scheduled(cron = "0 0 8,20 * * ?")
     @Transactional
-    public void sendInterviewRemindersEvery30s() {
+    public void sendInterviewRemindersEvery12Hours() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime start = now;
-        LocalDateTime end = now.plusMinutes(5); // chỉ lấy schedule 5 phút tới
+        LocalDateTime end = now.plusHours(12); // chỉ lấy schedule 12 tiếng tới
 
         List<InterviewSchedule> schedules = interviewScheduleRepository.findByScheduledAtBetween(start, end);
 

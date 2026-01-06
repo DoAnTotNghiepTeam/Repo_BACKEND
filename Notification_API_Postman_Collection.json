@@ -1,0 +1,245 @@
+{
+  "info": {
+    "name": "Notification API",
+    "description": "API Collection để test hệ thống thông báo",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Lấy danh sách thông báo (có phân trang)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/notifications?page=0&size=10",
+          "host": ["{{base_url}}"],
+          "path": ["api", "notifications"],
+          "query": [
+            {
+              "key": "page",
+              "value": "0",
+              "description": "Số trang (bắt đầu từ 0)"
+            },
+            {
+              "key": "size",
+              "value": "10",
+              "description": "Số lượng thông báo mỗi trang"
+            }
+          ]
+        },
+        "description": "Lấy danh sách tất cả thông báo của user hiện tại với phân trang.\n\nResponse:\n- notifications: Danh sách thông báo\n- currentPage: Trang hiện tại\n- totalPages: Tổng số trang\n- totalItems: Tổng số thông báo\n- hasNext: Có trang tiếp theo không\n- hasPrevious: Có trang trước không"
+      },
+      "response": []
+    },
+    {
+      "name": "2. Lấy thông báo chưa đọc",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/notifications/unread",
+          "host": ["{{base_url}}"],
+          "path": ["api", "notifications", "unread"]
+        },
+        "description": "Lấy tất cả thông báo chưa đọc của user hiện tại.\n\nResponse:\n- notifications: Danh sách thông báo chưa đọc\n- unreadCount: Tổng số thông báo chưa đọc"
+      },
+      "response": []
+    },
+    {
+      "name": "3. Đếm số thông báo chưa đọc",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/notifications/unread-count",
+          "host": ["{{base_url}}"],
+          "path": ["api", "notifications", "unread-count"]
+        },
+        "description": "Đếm tổng số thông báo chưa đọc của user hiện tại.\n\nDùng để hiển thị badge số thông báo trên icon.\n\nResponse:\n- unreadCount: Số lượng thông báo chưa đọc"
+      },
+      "response": []
+    },
+    {
+      "name": "4. Đánh dấu một thông báo là đã đọc",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/notifications/1/read",
+          "host": ["{{base_url}}"],
+          "path": ["api", "notifications", "1", "read"]
+        },
+        "description": "Đánh dấu một thông báo cụ thể là đã đọc.\n\nThay số '1' bằng ID thông báo thực tế.\n\nResponse:\n- message: Thông báo đã được đánh dấu đã đọc"
+      },
+      "response": []
+    },
+    {
+      "name": "5. Đánh dấu tất cả thông báo đã đọc",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/notifications/mark-all-read",
+          "host": ["{{base_url}}"],
+          "path": ["api", "notifications", "mark-all-read"]
+        },
+        "description": "Đánh dấu tất cả thông báo của user là đã đọc.\n\nResponse:\n- message: Đã đánh dấu tất cả thông báo là đã đọc"
+      },
+      "response": []
+    },
+    {
+      "name": "6. [TEST] Apply vào Job để tạo thông báo",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"resumeId\": 1,\n  \"coverLetter\": \"Tôi rất mong được làm việc tại công ty\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/applicants/jobs/1/apply",
+          "host": ["{{base_url}}"],
+          "path": ["api", "applicants", "jobs", "1", "apply"]
+        },
+        "description": "Apply vào một job để test tạo thông báo.\n\n- Candidate sẽ nhận thông báo: 'Ứng tuyển thành công'\n- Employer sẽ nhận thông báo: 'Có ứng viên mới ứng tuyển'\n\nThay số '1' bằng ID job thực tế."
+      },
+      "response": []
+    },
+    {
+      "name": "7. [TEST] Update trạng thái ứng viên",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"CV_PASSED\",\n  \"note\": \"CV của bạn rất ấn tượng!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/employee-browse-status/1/status",
+          "host": ["{{base_url}}"],
+          "path": ["api", "employee-browse-status", "1", "status"]
+        },
+        "description": "Employer cập nhật trạng thái ứng viên để test tạo thông báo cho candidate.\n\nCác trạng thái có thể dùng:\n- CV_PASSED: CV được duyệt\n- INTERVIEW: Mời phỏng vấn (cần thêm scheduledAt, location, interviewer)\n- HIRED: Được tuyển dụng\n- REJECTED: Bị từ chối\n\nThay số '1' bằng ID applicant thực tế."
+      },
+      "response": []
+    },
+    {
+      "name": "8. [TEST] Update trạng thái sang INTERVIEW",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"INTERVIEW\",\n  \"note\": \"Chúng tôi rất ấn tượng với hồ sơ của bạn\",\n  \"scheduledAt\": \"2026-01-10T14:00:00\",\n  \"location\": \"Tầng 12, Tòa nhà FPT, Cầu Giấy, Hà Nội\",\n  \"interviewer\": \"Mr. Nguyễn Văn A - HR Manager\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/employee-browse-status/1/status",
+          "host": ["{{base_url}}"],
+          "path": ["api", "employee-browse-status", "1", "status"]
+        },
+        "description": "Test mời phỏng vấn - cần đầy đủ thông tin thời gian, địa điểm, người phỏng vấn.\n\nCandidate sẽ nhận thông báo: 'Mời phỏng vấn' với đầy đủ thông tin."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "YOUR_JWT_TOKEN_HERE",
+      "type": "string"
+    }
+  ]
+}

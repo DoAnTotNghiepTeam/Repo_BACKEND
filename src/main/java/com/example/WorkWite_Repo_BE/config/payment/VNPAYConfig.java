@@ -10,6 +10,7 @@ import java.util.*;
 @Configuration
 public class VNPAYConfig {
 
+    // VNPay Config
     @Getter
     @Value("${payment.vnPay.url}")
     private String vnp_PayUrl;
@@ -37,6 +38,31 @@ public class VNPAYConfig {
     @Getter
     @Value("${payment.vnPay.orderType}")
     private String orderType;
+
+    @Getter
+    @Value("${payment.vnPay.frontend.successUrl}")
+    private String frontendSuccessUrl;
+
+    @Getter
+    @Value("${payment.vnPay.frontend.failUrl}")
+    private String frontendFailUrl;
+
+    // PayPal Config
+    @Getter
+    @Value("${paypal.client-id}")
+    private String paypalClientId;
+
+    @Getter
+    @Value("${paypal.secret}")
+    private String paypalSecret;
+
+    @Getter
+    @Value("${paypal.api}")
+    private String paypalApi;
+
+    @Getter
+    @Value("${paypal.return-url}")
+    private String paypalReturnUrl;
 
     public Map<String, String> getVNPayBaseParams() {
         Map<String, String> vnpParamsMap = new HashMap<>();

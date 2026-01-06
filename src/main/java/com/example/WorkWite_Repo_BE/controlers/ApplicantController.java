@@ -119,6 +119,13 @@ public class ApplicantController {
         return ResponseEntity.ok(applicantService.getApplicantDetail(applicantId));
     }
 
+    // Đánh dấu đã đọc application
+    @PatchMapping("/{applicantId}/mark-read")
+    public ResponseEntity<Void> markAsRead(@PathVariable Long applicantId) {
+        applicantService.markAsRead(applicantId);
+        return ResponseEntity.ok().build();
+    }
+
 //    @DeleteMapping("/delete/{applicantId}")
 //    public ResponseEntity<Void> deleteApplicant(@PathVariable Long applicantId) {
 //        applicantService.deleteApplicant(applicantId);

@@ -1,0 +1,465 @@
+{
+	"info": {
+		"_postman_id": "banner-api-collection-2026",
+		"name": "WorkWise - Banner API Collection",
+		"description": "Collection đầy đủ các API của hệ thống Banner\n\n**Hướng dẫn sử dụng:**\n1. Import file này vào Postman\n2. Tạo Environment với variable: `base_url` = `http://localhost:8080`\n3. Đăng nhập để lấy JWT token, paste vào `{{token}}`\n4. Test từng API theo thứ tự\n\n**Lưu ý:**\n- Các API có đánh dấu 🔒 cần JWT token\n- Các API có đánh dấu 👮 chỉ dành cho Admin",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1️⃣ User - Tạo Banner Mới 🔒",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text",
+						"description": "JWT token sau khi đăng nhập"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "bannerImage",
+							"type": "file",
+							"src": "/path/to/your/banner_image.png",
+							"description": "File ảnh banner (PNG/JPG)"
+						},
+						{
+							"key": "companyName",
+							"value": "FPT Software",
+							"type": "text",
+							"description": "Tên công ty"
+						},
+						{
+							"key": "companyEmail",
+							"value": "contact@fpt.com.vn",
+							"type": "text",
+							"description": "Email công ty"
+						},
+						{
+							"key": "companyPhone",
+							"value": "0901234567",
+							"type": "text",
+							"description": "Số điện thoại (10-11 số)"
+						},
+						{
+							"key": "startDate",
+							"value": "2026-01-05",
+							"type": "text",
+							"description": "Ngày bắt đầu (yyyy-MM-dd)"
+						},
+						{
+							"key": "endDate",
+							"value": "2026-01-15",
+							"type": "text",
+							"description": "Ngày kết thúc (yyyy-MM-dd)"
+						},
+						{
+							"key": "bannerType",
+							"value": "Vip",
+							"type": "text",
+							"description": "Loại: Vip / Featured / Standard"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{base_url}}/api/banners",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"banners"
+					]
+				},
+				"description": "**Chức năng:** Tạo yêu cầu thuê banner mới\n\n**Quyền truy cập:** User đã đăng nhập\n\n**Luồng xử lý:**\n1. Validate thông tin (email, phone, dates)\n2. Upload ảnh banner lên server\n3. Kiểm tra slot có ai thuê chưa\n4. Tính tiền: Giá × Số ngày\n5. Trừ tiền từ tài khoản user\n6. Tạo banner với status = PENDING\n\n**Giá thuê:**\n- Vip: 79,230 VND/ngày (3 USD)\n- Featured: 52,820 VND/ngày (2 USD)\n- Standard: 26,410 VND/ngày (1 USD)\n\n**Lỗi thường gặp:**\n- 400: Số dư không đủ\n- 400: Slot đã có người thuê\n- 400: Ngày không hợp lệ\n- 401: Chưa đăng nhập"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{base_url}}/api/banners",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"banners"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [],
+					"cookie": [],
+					"body": "{\n    \"id\": 1,\n    \"companyName\": \"FPT Software\",\n    \"companyEmail\": \"contact@fpt.com.vn\",\n    \"bannerImage\": \"http://localhost:8080/uploads/banners/1735827600000_banner.png\",\n    \"startDate\": \"2026-01-05T00:00:00\",\n    \"endDate\": \"2026-01-15T23:59:59\",\n    \"amount\": 871530,\n    \"status\": \"PENDING\",\n    \"createdAt\": \"2026-01-02T10:30:00\",\n    \"updatedAt\": \"2026-01-02T10:30:00\",\n    \"userId\": 5,\n    \"userName\": \"Nguyễn Văn A\",\n    \"bannerType\": \"Vip\"\n}"
+				}
+			]
+		},
+		{
+			"name": "2️⃣ User - Sửa Banner 🔒",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "bannerImage",
+							"type": "file",
+							"src": "/path/to/new_banner.png",
+							"description": "Ảnh banner mới (tùy chọn)"
+						},
+						{
+							"key": "companyName",
+							"value": "FPT Corporation",
+							"type": "text"
+						},
+						{
+							"key": "companyEmail",
+							"value": "info@fpt.com.vn",
+							"type": "text"
+						},
+						{
+							"key": "companyPhone",
+							"value": "0987654321",
+							"type": "text"
+						},
+						{
+							"key": "startDate",
+							"value": "2026-01-10",
+							"type": "text"
+						},
+						{
+							"key": "endDate",
+							"value": "2026-01-25",
+							"type": "text",
+							"description": "Tăng thêm 10 ngày"
+						},
+						{
+							"key": "bannerType",
+							"value": "Featured",
+							"type": "text",
+							"description": "Đổi từ Vip → Featured"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{base_url}}/api/banners/1",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"banners",
+						"1"
+					]
+				},
+				"description": "**Chức năng:** Cập nhật thông tin banner\n\n**Quyền truy cập:** User sở hữu banner\n\n**Điều kiện:** Chỉ sửa được banner PENDING hoặc APPROVED\n\n**Luồng xử lý:**\n1. Tính tiền mới - tiền cũ\n2. Nếu tăng: Trừ thêm tiền\n3. Nếu giảm: Hoàn lại tiền\n4. Kiểm tra slot mới có trùng không\n5. Set lại status = PENDING (chờ admin duyệt lại)\n\n**Ví dụ:**\n- Cũ: Vip 10 ngày = 792,300 VND\n- Mới: Featured 15 ngày = 792,300 VND\n- Chênh lệch: 0 VND → Không trừ/hoàn"
+			},
+			"response": []
+		},
+		{
+			"name": "3️⃣ Admin - Duyệt Banner 👮🔒",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{admin_token}}",
+						"type": "text",
+						"description": "JWT token của Admin"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/banners/1/approve",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"banners",
+						"1",
+						"approve"
+					]
+				},
+				"description": "**Chức năng:** Admin duyệt banner\n\n**Quyền truy cập:** Chỉ Admin\n\n**Logic:**\n- Nếu startDate > hiện tại → Set APPROVED (chờ đến ngày)\n- Nếu startDate ≤ hiện tại → Set ACTIVE (hiển thị ngay)\n\n**Ví dụ:**\n- Banner A: startDate = 2026-01-10, hiện tại = 2026-01-02 → APPROVED\n- Banner B: startDate = 2026-01-01, hiện tại = 2026-01-02 → ACTIVE\n\n**Sau khi duyệt:**\n- Banner sẽ tự động chuyển APPROVED → ACTIVE khi đến ngày (Scheduler)"
+			},
+			"response": []
+		},
+		{
+			"name": "4️⃣ Admin - Từ Chối Banner 👮🔒",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{admin_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"reason\": \"Hình ảnh banner không phù hợp với chính sách quảng cáo\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/banners/1/reject",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"banners",
+						"1",
+						"reject"
+					]
+				},
+				"description": "**Chức năng:** Admin từ chối banner\n\n**Quyền truy cập:** Chỉ Admin\n\n**Luồng xử lý:**\n1. Set status = REJECTED\n2. Hoàn toàn bộ tiền cho user\n3. Lưu lý do từ chối (nếu có)\n\n**Lý do từ chối thường gặp:**\n- Hình ảnh không phù hợp\n- Nội dung vi phạm chính sách\n- Thông tin công ty sai"
+			},
+			"response": []
+		},
+		{
+			"name": "5️⃣ Lấy Tất Cả Banner (Phân Trang)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/banners?page=1&size=10",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"banners"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1",
+							"description": "Trang hiện tại (bắt đầu từ 1)"
+						},
+						{
+							"key": "size",
+							"value": "10",
+							"description": "Số lượng mỗi trang"
+						}
+					]
+				},
+				"description": "**Chức năng:** Lấy danh sách tất cả banner có phân trang\n\n**Quyền truy cập:** Public (không cần đăng nhập)\n\n**Use case:** Admin xem tất cả banner để quản lý\n\n**Response fields:**\n- `data`: Mảng banner\n- `pageNumber`: Trang hiện tại\n- `pageSize`: Số lượng/trang\n- `totalRecords`: Tổng số banner\n- `totalPages`: Tổng số trang\n- `hasNext`: Có trang tiếp theo?\n- `hasPrevious`: Có trang trước?"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/banners?page=1&size=10",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"banners"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [],
+					"cookie": [],
+					"body": "{\n    \"data\": [\n        {\n            \"id\": 1,\n            \"companyName\": \"FPT Software\",\n            \"companyEmail\": \"contact@fpt.com.vn\",\n            \"bannerImage\": \"http://localhost:8080/uploads/banners/1735827600000_banner.png\",\n            \"startDate\": \"2026-01-05T00:00:00\",\n            \"endDate\": \"2026-01-15T23:59:59\",\n            \"amount\": 871530,\n            \"status\": \"ACTIVE\",\n            \"createdAt\": \"2026-01-02T10:30:00\",\n            \"updatedAt\": \"2026-01-05T01:00:00\",\n            \"userId\": 5,\n            \"userName\": \"Nguyễn Văn A\",\n            \"bannerType\": \"Vip\"\n        }\n    ],\n    \"pageNumber\": 1,\n    \"pageSize\": 10,\n    \"totalRecords\": 1,\n    \"totalPages\": 1,\n    \"hasNext\": false,\n    \"hasPrevious\": false\n}"
+				}
+			]
+		},
+		{
+			"name": "6️⃣ Lấy Banner Đang Active",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/banners/active",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"banners",
+						"active"
+					]
+				},
+				"description": "**Chức năng:** Lấy danh sách banner đang ACTIVE (đang hiển thị)\n\n**Quyền truy cập:** Public\n\n**Use case:** Frontend hiển thị banner trên trang chủ\n\n**Lưu ý:** Chỉ trả về các field cần thiết để giảm data:\n- companyName\n- bannerImage\n- startDate\n- endDate\n- status"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/banners/active",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"banners",
+								"active"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [],
+					"cookie": [],
+					"body": "[\n    {\n        \"companyName\": \"FPT Software\",\n        \"startDate\": \"2026-01-05T00:00:00\",\n        \"endDate\": \"2026-01-15T23:59:59\",\n        \"status\": \"ACTIVE\",\n        \"bannerImage\": \"http://localhost:8080/uploads/banners/1735827600000_vip.png\"\n    },\n    {\n        \"companyName\": \"Viettel Solutions\",\n        \"startDate\": \"2026-01-03T00:00:00\",\n        \"endDate\": \"2026-01-20T23:59:59\",\n        \"status\": \"ACTIVE\",\n        \"bannerImage\": \"http://localhost:8080/uploads/banners/1735828000000_featured.png\"\n    }\n]"
+				}
+			]
+		},
+		{
+			"name": "7️⃣ Lấy Banner Theo UserId 🔒",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/banners/user/5",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"banners",
+						"user",
+						"5"
+					]
+				},
+				"description": "**Chức năng:** Lấy tất cả banner của 1 user cụ thể\n\n**Quyền truy cập:** User đã đăng nhập\n\n**Use case:** User xem lịch sử banner của mình\n\n**Params:**\n- `userId`: ID của user (VD: 5)"
+			},
+			"response": []
+		},
+		{
+			"name": "8️⃣ Lấy Banner Theo Type",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/banners/type/Vip",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"banners",
+						"type",
+						"Vip"
+					]
+				},
+				"description": "**Chức năng:** Lấy banner ACTIVE theo loại\n\n**Quyền truy cập:** Public\n\n**Params:**\n- `bannerType`: Vip / Featured / Standard\n\n**Use case:** Frontend chỉ hiển thị banner Vip ở vị trí nổi bật"
+			},
+			"response": []
+		},
+		{
+			"name": "9️⃣ Xóa Banner 🔒",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/banners/1",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"banners",
+						"1"
+					]
+				},
+				"description": "**Chức năng:** Xóa banner\n\n**Quyền truy cập:** User sở hữu banner hoặc Admin\n\n**Lưu ý:** \n- Không hoàn tiền khi xóa\n- Nên dùng reject thay vì delete để giữ lịch sử"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "your_jwt_token_here",
+			"type": "string"
+		},
+		{
+			"key": "admin_token",
+			"value": "admin_jwt_token_here",
+			"type": "string"
+		}
+	]
+}

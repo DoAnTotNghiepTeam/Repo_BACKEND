@@ -11,6 +11,8 @@ import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 
@@ -38,12 +40,17 @@ public class UserController {
         return this.userService.getUserById(id);
     }
 
-//    update user
+    //    update user
     @PatchMapping("/{id}")
     public ResponseEntity<UserResponseDto> updateUser(
             @PathVariable("id") Long id,
-            @RequestBody @Valid UserUpdateRequestDto userUpdateRequestDto) {
-        UserResponseDto response = this.userService.updateUser(id, userUpdateRequestDto, getCurrentUsernameOrEmail());
+            @RequestParam(value = "username", required = false) String username,
+            @RequestParam(value = "fullname", required = false) String fullName,
+            @RequestPart(value = "avatar", required = false) MultipartFile avatarFile) {
+        UserUpdateRequestDto userUpdateRequestDto = new UserUpdateRequestDto();
+        userUpdateRequestDto.setUsername(username);
+        userUpdateRequestDto.setFullName(fullName);
+        UserResponseDto response = this.userService .updateUser(id, userUpdateRequestDto, avatarFile, getCurrentUsernameOrEmail());
         return ResponseEntity.ok(response);
     }
 

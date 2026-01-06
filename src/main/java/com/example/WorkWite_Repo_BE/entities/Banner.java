@@ -27,24 +27,15 @@ public class Banner {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private Long amount; // Số tiền đã trừ khi thuê banner
-    private String description;
     private String bannerType; // Vip, Featured, Standard
-    public Long getAmount() {
-        return amount;
-    }
-
-    public void setAmount(Long amount) {
-        this.amount = amount;
-    }
-
 
     @Enumerated(EnumType.STRING)
     private BannerStatus status; // PENDING, ACTIVE, REJECTED, EXPIRED
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime createdAt;    // ngfay tạo
+    private LocalDateTime updatedAt;    // ngày cập 
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user;
+    private User user;     // Thuộc về user nào (nhiều banner → 1 user)
 }

@@ -17,5 +17,4 @@ public class UserResponseDto {
     private String avatarUrl;
     private java.util.List<String> roles;
     private String balance;
-    private String address;
 }

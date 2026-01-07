@@ -1,0 +1,630 @@
+{
+	"info": {
+		"name": "Employer Notification API",
+		"description": "Postman collection cho tất cả API thông báo của Nhà Tuyển Dụng (Employer)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{accessToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "employerId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "notificationId",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Authentication",
+			"item": [
+				{
+					"name": "Login as Employer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+									"    pm.collectionVariables.set('employerId', response.data.employer.id);",
+									"    console.log('✅ Employer logged in successfully');",
+									"    console.log('Token:', response.data.accessToken);",
+									"    console.log('Employer ID:', response.data.employer.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"employer@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "Đăng nhập với tài khoản Nhà Tuyển Dụng để lấy access token"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. View Notifications",
+			"item": [
+				{
+					"name": "Get All Notifications (Paginated)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log('Total notifications:', response.totalItems);",
+									"    console.log('Current page:', response.currentPage);",
+									"    console.log('Total pages:', response.totalPages);",
+									"    ",
+									"    if (response.notifications && response.notifications.length > 0) {",
+									"        const firstNotif = response.notifications[0];",
+									"        pm.collectionVariables.set('notificationId', firstNotif.id);",
+									"        console.log('First notification ID saved:', firstNotif.id);",
+									"        console.log('Type:', firstNotif.notificationType);",
+									"        console.log('Message:', firstNotif.message);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notifications"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Số trang (0-indexed)"
+								},
+								{
+									"key": "size",
+									"value": "10",
+									"description": "Số thông báo mỗi trang"
+								}
+							]
+						},
+						"description": "Lấy tất cả thông báo của employer với phân trang.\n\n**Response chứa:**\n- NEW_APPLICANT: Khi có ứng viên mới apply vào job posting"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Unread Notifications (Paginated)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log('Unread notifications:', response.totalItems);",
+									"    ",
+									"    if (response.notifications) {",
+									"        response.notifications.forEach((notif, index) => {",
+									"            console.log(`${index + 1}. [${notif.notificationType}] ${notif.message}`);",
+									"        });",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications/unread?page=0&size=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notifications", "unread"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Số trang (0-indexed)"
+								},
+								{
+									"key": "size",
+									"value": "20",
+									"description": "Số thông báo mỗi trang"
+								}
+							]
+						},
+						"description": "Lấy danh sách thông báo chưa đọc của employer với phân trang.\n\n**Chỉ trả về:** isRead = false"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Unread Count",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log('🔔 Unread count:', response.unreadCount);",
+									"    ",
+									"    // Set badge count in environment for UI testing",
+									"    pm.environment.set('badgeCount', response.unreadCount);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications/unread-count",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notifications", "unread-count"]
+						},
+						"description": "Đếm số thông báo chưa đọc của employer.\n\n**Dùng để:** Hiển thị badge số thông báo trên UI (ví dụ: icon chuông có số 5)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Manage Notifications",
+			"item": [
+				{
+					"name": "Mark Single Notification as Read",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log('✅', response.message);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications/{{notificationId}}/read",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notifications", "{{notificationId}}", "read"]
+						},
+						"description": "Đánh dấu một thông báo cụ thể là đã đọc.\n\n**Use case:** \n- Employer click vào thông báo để xem chi tiết\n- Tự động mark as read"
+					},
+					"response": []
+				},
+				{
+					"name": "Mark All Notifications as Read",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log('✅✅', response.message);",
+									"    console.log('All notifications marked as read');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications/mark-all-read",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notifications", "mark-all-read"]
+						},
+						"description": "Đánh dấu TẤT CẢ thông báo của employer là đã đọc.\n\n**Use case:**\n- Button \"Đánh dấu tất cả đã đọc\" trong notification dropdown\n- Clear tất cả badge count"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Notification (Soft Delete)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log('🗑️', response.message);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications/{{notificationId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notifications", "{{notificationId}}"]
+						},
+						"description": "Xóa một thông báo (soft delete - đánh dấu deletedAt).\n\n**Lưu ý:** \n- Không xóa vĩnh viễn khỏi database\n- Chỉ set deletedAt = current timestamp\n- Notification sẽ không hiện trong danh sách nữa"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Complete Workflow Test",
+			"item": [
+				{
+					"name": "Step 1: Login as Employer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Login successful', function() {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+									"    pm.collectionVariables.set('employerId', response.data.employer.id);",
+									"    console.log('✅ Step 1: Logged in as Employer');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"employer@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Step 2: Check Unread Count",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Get unread count', function() {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    console.log('✅ Step 2: Unread notifications:', response.unreadCount);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications/unread-count",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notifications", "unread-count"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Step 3: View Unread Notifications",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Get unread notifications', function() {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    console.log('✅ Step 3: Retrieved', response.totalItems, 'unread notifications');",
+									"    ",
+									"    if (response.notifications && response.notifications.length > 0) {",
+									"        pm.collectionVariables.set('notificationId', response.notifications[0].id);",
+									"        console.log('Saved first notification ID:', response.notifications[0].id);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications/unread?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notifications", "unread"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Step 4: Mark One as Read",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Mark notification as read', function() {",
+									"    pm.response.to.have.status(200);",
+									"    console.log('✅ Step 4: Marked notification', pm.collectionVariables.get('notificationId'), 'as read');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications/{{notificationId}}/read",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notifications", "{{notificationId}}", "read"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Step 5: Verify Count Decreased",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Unread count decreased', function() {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    console.log('✅ Step 5: New unread count:', response.unreadCount);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications/unread-count",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notifications", "unread-count"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Step 6: Mark All as Read",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Mark all as read', function() {",
+									"    pm.response.to.have.status(200);",
+									"    console.log('✅ Step 6: Marked all notifications as read');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications/mark-all-read",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notifications", "mark-all-read"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Step 7: Verify Count is Zero",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Unread count should be 0', function() {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    console.log('✅ Step 7: Final unread count:', response.unreadCount);",
+									"    pm.expect(response.unreadCount).to.equal(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications/unread-count",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notifications", "unread-count"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Step 8: Delete a Notification",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Delete notification', function() {",
+									"    pm.response.to.have.status(200);",
+									"    console.log('✅ Step 8: Deleted notification', pm.collectionVariables.get('notificationId'));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications/{{notificationId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notifications", "{{notificationId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Step 9: Verify Deletion",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Notification deleted', function() {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    console.log('✅ Step 9: Total notifications now:', response.totalItems);",
+									"    console.log('🎉 Complete workflow test finished!');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notifications"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "5. Example Responses",
+			"item": [
+				{
+					"name": "Example: NEW_APPLICANT Notification",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications?page=0&size=1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notifications"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "1"
+								}
+							]
+						},
+						"description": "**Expected Response:**\n```json\n{\n  \"notifications\": [\n    {\n      \"id\": 15,\n      \"message\": \"Có ứng viên mới apply vào job Software Engineer\",\n      \"notificationType\": \"NEW_APPLICANT\",\n      \"isRead\": false,\n      \"applicantId\": 53,\n      \"createdAt\": \"2026-01-05T18:30:00\",\n      \"jobTitle\": \"Software Engineer\",\n      \"candidateName\": \"Nguyễn Văn A\",\n      \"resumeUrl\": \"https://firebase.../resume.pdf\"\n    }\n  ],\n  \"currentPage\": 0,\n  \"totalPages\": 5,\n  \"totalItems\": 42\n}\n```"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

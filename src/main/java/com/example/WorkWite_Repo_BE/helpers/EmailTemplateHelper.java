@@ -175,5 +175,79 @@ public class EmailTemplateHelper {
     """.formatted(candidateName, jobTitle, time, location);
     }
 
+    // gửi mail xác nhận ứng tuyển lên nhà tuyển dụng
+
+    public String buildEmployerApprovalEmail(String employerName, String companyName) {
+        return "<!DOCTYPE html>" +
+                "<html>" +
+                "<head>" +
+                "<style>" +
+                "body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }" +
+                ".container { max-width: 600px; margin: 0 auto; padding: 20px; }" +
+                ".header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }" +
+                ".content { padding: 20px; background-color: #f9f9f9; }" +
+                ".footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }" +
+                ".button { display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }" +
+                "</style>" +
+                "</head>" +
+                "<body>" +
+                "<div class='container'>" +
+                "<div class='header'>" +
+                "<h1>Chúc mừng!</h1>" +
+                "</div>" +
+                "<div class='content'>" +
+                "<p>Xin chào <strong>" + employerName + "</strong>,</p>" +
+                "<p>Tài khoản Nhà tuyển dụng của bạn đã được <strong>phê duyệt thành công</strong>!</p>" +
+                "<p><strong>Thông tin công ty:</strong> " + companyName + "</p>" +
+                "<p>Bạn giờ đây có thể:</p>" +
+                "<ul>" +
+                "<li>Đăng tin tuyển dụng</li>" +
+                "<li>Quản lý ứng viên</li>" +
+                "<li>Xem hồ sơ ứng tuyển</li>" +
+                "</ul>" +
+                "<p style='text-align: center; margin-top: 20px;'>" +
+                "<a href='http://localhost:3000/employer/dashboard' class='button'>Truy cập Dashboard</a>" +
+                "</p>" +
+                "</div>" +
+                "<div class='footer'>" +
+                "<p>Trân trọng,<br>Đội ngũ WorkWise</p>" +
+                "</div>" +
+                "</div>" +
+                "</body>" +
+                "</html>";
+    }
+
+    public String buildEmployerRejectionEmail(String employerName, String reason) {
+        return "<!DOCTYPE html>" +
+                "<html>" +
+                "<head>" +
+                "<style>" +
+                "body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }" +
+                ".container { max-width: 600px; margin: 0 auto; padding: 20px; }" +
+                ".header { background-color: #f44336; color: white; padding: 20px; text-align: center; }" +
+                ".content { padding: 20px; background-color: #f9f9f9; }" +
+                ".footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }" +
+                "</style>" +
+                "</head>" +
+                "<body>" +
+                "<div class='container'>" +
+                "<div class='header'>" +
+                "<h1>Thông báo về tài khoản</h1>" +
+                "</div>" +
+                "<div class='content'>" +
+                "<p>Xin chào <strong>" + employerName + "</strong>,</p>" +
+                "<p>Rất tiếc, tài khoản Nhà tuyển dụng của bạn <strong>chưa được phê duyệt</strong>.</p>" +
+                "<p><strong>Lý do:</strong> " + reason + "</p>" +
+                "<p>Vui lòng kiểm tra lại thông tin và nộp lại đơn đăng ký.</p>" +
+                "</div>" +
+                "<div class='footer'>" +
+                "<p>Trân trọng,<br>Đội ngũ WorkWise</p>" +
+                "</div>" +
+                "</div>" +
+                "</body>" +
+                "</html>";
+    }
+
+
 
 }

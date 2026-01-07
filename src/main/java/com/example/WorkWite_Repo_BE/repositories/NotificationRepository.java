@@ -38,5 +38,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     // Đánh dấu tất cả thông báo là đã đọc
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true WHERE n.user.id = :userId AND n.isRead = false AND n.deletedAt IS NULL")
-    void markAllAsRead(@Param("userId") Long userId);
-}
+    void markAllAsRead(@Param("userId") Long userId);    
+    // ✎️ Tìm notification theo applicant và user (cho candidate)
+    @Query("SELECT n FROM Notification n WHERE n.applicant.id = :applicantId AND n.user.id = :userId AND n.deletedAt IS NULL ORDER BY n.createdAt DESC")
+    Optional<Notification> findByApplicantIdAndUserId(@Param("applicantId") Long applicantId, @Param("userId") Long userId);}

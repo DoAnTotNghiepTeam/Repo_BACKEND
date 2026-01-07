@@ -40,7 +40,6 @@ import java.util.NoSuchElementException;
 @RequestMapping("/api/recommend")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*") // nếu FE chạy port khác thì rất cần
 public class RecommendationController {
 
     private final RecommendationService recommendationService;

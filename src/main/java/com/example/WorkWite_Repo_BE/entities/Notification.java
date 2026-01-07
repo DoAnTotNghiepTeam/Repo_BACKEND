@@ -59,6 +59,9 @@ public class Notification {
     @Column(name = "company_name")
     private String companyName;  // Tên công ty
     
+    @Column(name = "job_id")
+    private Long jobId;  // ID của công việc
+    
     @PrePersist
     public void prePersist() {
         if (createdAt == null) {

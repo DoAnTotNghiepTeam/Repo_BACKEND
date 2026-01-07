@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,7 +32,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     
     /**
-     * ✅ Tạo thông báo khi employer cập nhật trạng thái ứng viên
+     * ✅ Tạo hoặc cập nhật thông báo khi employer cập nhật trạng thái ứng viên
      */
     @Transactional
     public void createStatusUpdateNotification(Applicant applicant, ApplicationStatus newStatus, String note) {
@@ -43,22 +44,43 @@ public class NotificationService {
         String title = getNotificationTitle(newStatus, companyName);
         String message = getNotificationMessage(newStatus, jobTitle, companyName, note);
         
-        Notification notification = Notification.builder()
-                .user(candidateUser)
-                .applicant(applicant)
-                .notificationType(notificationType)
-                .title(title)
-                .message(message)
-                .status(newStatus)
-                .jobTitle(jobTitle)
-                .companyName(companyName)
-                .isRead(false)
-                .createdAt(LocalDateTime.now())
-                .build();
+        // ✅ Tìm notification cũ của applicant này
+        Optional<Notification> existingNotification = notificationRepository
+                .findByApplicantIdAndUserId(applicant.getId(), candidateUser.getId());
         
-        notificationRepository.save(notification);
-        log.info("Đã tạo thông báo {} cho user {} về đơn ứng tuyển {}", 
-                 notificationType, candidateUser.getId(), applicant.getId());
+        if (existingNotification.isPresent()) {
+            // ✅ Nếu đã có notification, UPDATE thông tin
+            Notification notification = existingNotification.get();
+            notification.setNotificationType(notificationType);
+            notification.setTitle(title);
+            notification.setMessage(message);
+            notification.setStatus(newStatus);
+            notification.setIsRead(false); // Đánh dấu lại chưa đọc để user thấy
+            notification.setCreatedAt(LocalDateTime.now()); // Cập nhật thời gian
+            
+            notificationRepository.save(notification);
+            log.info("Đã cập nhật notification {} cho user {} về đơn ứng tuyển {}", 
+                     notificationType, candidateUser.getId(), applicant.getId());
+        } else {
+            // ✅ Nếu chưa có, TẠO MỚI
+            Notification notification = Notification.builder()
+                    .user(candidateUser)
+                    .applicant(applicant)
+                    .notificationType(notificationType)
+                    .title(title)
+                    .message(message)
+                    .status(newStatus)
+                    .jobTitle(jobTitle)
+                    .companyName(companyName)
+                    .jobId(applicant.getJobPosting().getId())
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            
+            notificationRepository.save(notification);
+            log.info("Đã tạo thông báo {} cho user {} về đơn ứng tuyển {}", 
+                     notificationType, candidateUser.getId(), applicant.getId());
+        }
     }
     
     /**
@@ -82,6 +104,7 @@ public class NotificationService {
                 .status(ApplicationStatus.PENDING)
                 .jobTitle(jobTitle)
                 .companyName(null)
+                .jobId(applicant.getJobPosting().getId())
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -112,6 +135,7 @@ public class NotificationService {
                 .status(ApplicationStatus.PENDING)
                 .jobTitle(jobTitle)
                 .companyName(companyName)
+                .jobId(applicant.getJobPosting().getId())
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -263,6 +287,7 @@ public class NotificationService {
                 .applicantId(notification.getApplicant() != null ? notification.getApplicant().getId() : null)
                 .jobTitle(notification.getJobTitle())
                 .companyName(notification.getCompanyName())
+                .jobId(notification.getJobId())
                 .build();
     }
 }

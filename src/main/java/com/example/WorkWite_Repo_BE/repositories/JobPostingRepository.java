@@ -134,5 +134,14 @@ public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
     );
 
 
+    @Query("SELECT COUNT(j) FROM JobPosting j WHERE j.employer.id = :employerId")
+    long countByEmployerId(@Param("employerId") Long employerId);
+
+    @Query("SELECT MONTH(j.createdAt), COUNT(j) FROM JobPosting j " +
+            "WHERE j.employer.id = :employerId AND YEAR(j.createdAt) = :year " +
+            "GROUP BY MONTH(j.createdAt) ORDER BY MONTH(j.createdAt)")
+    List<Object[]> countJobPostingByEmployerAndMonth(@Param("employerId") Long employerId, @Param("year") int year);
+
+
 
 }

@@ -19,18 +19,7 @@ public class StatisticsService {
     /**
      * Trả về danh sách top công ty được ứng viên apply nhiều nhất
      */
-    public List<Map<String, Object>> getTopCompaniesByApplications() {
-        List<Object[]> results = applicantRepo.findTopCompaniesByApplications();
-        List<Map<String, Object>> companies = new ArrayList<>();
-        for (Object[] row : results) {
-            Map<String, Object> company = new HashMap<>();
-            company.put("employerId", row[0]);
-            company.put("companyName", row[1]);
-            company.put("totalApply", row[2]);
-            companies.add(company);
-        }
-        return companies;
-    }
+    // Removed unused: getTopCompaniesByApplications()
     @Autowired
     private UserJpaRepository userRepo;
     @Autowired

@@ -21,13 +21,8 @@ public interface ApplicantRepository extends JpaRepository<Applicant, Long> {
     /**
      * Lấy danh sách các công ty (employer) được ứng viên apply nhiều nhất
      */
-    @Query("SELECT e.id, e.companyInformation.companyName, COUNT(a) as totalApply " +
-            "FROM Applicant a " +
-            "JOIN a.jobPosting jp " +
-            "JOIN jp.employer e " +
-            "GROUP BY e.id, e.companyInformation.companyName " +
-            "ORDER BY totalApply DESC")
-    List<Object[]> findTopCompaniesByApplications();
+    // Removed unused query: findTopCompaniesByApplications()
+    
     boolean existsByJobPostingIdAndCandidateId(Long jobPostingId, Long candidateId);
 
     Page<Applicant> findByCandidateId(Long candidateId , Pageable pageable);
@@ -43,9 +38,7 @@ public interface ApplicantRepository extends JpaRepository<Applicant, Long> {
     @Query("SELECT MAX(a.appliedAt) FROM Applicant a WHERE a.jobPosting.id = :jobId")
     LocalDateTime findLastAppliedAtByJobId(@Param("jobId") Long jobId);
 
-    // đếm số lượng appli HIRED
-    @Query("SELECT MONTH(a.appliedAt) as month, COUNT(a) as value FROM Applicant a WHERE YEAR(a.appliedAt) = :year GROUP BY MONTH(a.appliedAt)")
-    List<Object[]> countApplicantByMonth(@Param("year") int year);
+        // Removed unused query: countApplicantByMonth(year)
     Long countByJobPostingId(Long jobId);
     Long countByJobPostingIdAndApplicationStatus(Long jobPostingId, ApplicationStatus status);
 

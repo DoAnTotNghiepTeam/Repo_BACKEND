@@ -14,14 +14,7 @@ import com.example.WorkWite_Repo_BE.services.StatisticsService;
 @RestController
 @RequestMapping("/api/statistics")
 public class StatisticsController {
-    /**
-     * API trả về danh sách top công ty được ứng viên apply nhiều nhất
-     */
-    @GetMapping("/top-companies")
-    public ResponseEntity<List<Map<String, Object>>> getTopCompanies() {
-        List<Map<String, Object>> companies = statisticsService.getTopCompaniesByApplications();
-        return ResponseEntity.ok(companies);
-    }
+    // Removed unused endpoint: GET /api/statistics/top-companies
     private final StatisticsService statisticsService;
 
     public StatisticsController(StatisticsService statisticsService) {

@@ -89,21 +89,33 @@ WHERE
     );
 
 # -- Migration: Update CV_REVIEW to CV_PASSED
+
+-- Bước 1: Thêm CV_PASSED vào enum của bảng applicants (giữ cả CV_REVIEW)
+ALTER TABLE applicants 
+MODIFY COLUMN application_status 
+ENUM('PENDING','CV_REVIEW','CV_PASSED','INTERVIEW','OFFER','HIRED','REJECTED') NOT NULL;
+
+-- Bước 2: Update dữ liệu trong bảng applicants
 UPDATE applicants
 SET application_status = 'CV_PASSED'
 WHERE application_status = 'CV_REVIEW';
 
--- Bước 1: Thêm CV_PASSED vào enum (giữ cả CV_REVIEW)
+-- Bước 3: Xóa CV_REVIEW khỏi enum của bảng applicants
+ALTER TABLE applicants 
+MODIFY COLUMN application_status 
+ENUM('PENDING','CV_PASSED','INTERVIEW','OFFER','HIRED','REJECTED') NOT NULL;
+
+-- Bước 4: Thêm CV_PASSED vào enum của bảng applicant_history (giữ cả CV_REVIEW)
 ALTER TABLE applicant_history 
 MODIFY COLUMN status 
 ENUM('PENDING','CV_REVIEW','CV_PASSED','INTERVIEW','OFFER','HIRED','REJECTED') NOT NULL;
 
--- Bước 2: Update dữ liệu cũ
+-- Bước 5: Update dữ liệu trong bảng applicant_history
 UPDATE applicant_history 
 SET status = 'CV_PASSED' 
 WHERE status = 'CV_REVIEW';
 
--- Bước 3: Xóa CV_REVIEW khỏi enum
+-- Bước 6: Xóa CV_REVIEW khỏi enum của bảng applicant_history
 ALTER TABLE applicant_history 
 MODIFY COLUMN status 
 ENUM('PENDING','CV_PASSED','INTERVIEW','OFFER','HIRED','REJECTED') NOT NULL;

@@ -80,4 +80,21 @@ public interface ApplicantRepository extends JpaRepository<Applicant, Long> {
             "GROUP BY a.applicationStatus")
     List<Object[]> countApplicantsByStatus(@Param("jobId") Long jobId);
 
+    @Query("SELECT COUNT(a) FROM Applicant a WHERE a.jobPosting.employer.id = :employerId")
+    long countByEmployerId(@Param("employerId") Long employerId);
+
+    @Query("SELECT COUNT(a) FROM Applicant a WHERE a.jobPosting.employer.id = :employerId AND a.applicationStatus = :status")
+    long countByEmployerIdAndStatus(@Param("employerId") Long employerId, @Param("status") ApplicationStatus status);
+
+    @Query("SELECT MONTH(a.appliedAt), COUNT(a) FROM Applicant a " +
+            "WHERE a.jobPosting.employer.id = :employerId AND YEAR(a.appliedAt) = :year " +
+            "GROUP BY MONTH(a.appliedAt) ORDER BY MONTH(a.appliedAt)")
+    List<Object[]> countApplicantsByEmployerAndMonth(@Param("employerId") Long employerId, @Param("year") int year);
+
+    @Query("SELECT j.employer.id, COUNT(a) as totalApply " +
+            "FROM Applicant a JOIN a.jobPosting j " +
+            "GROUP BY j.employer.id " +
+            "ORDER BY totalApply DESC")
+    List<Object[]> findTopCompaniesByApplications1();
+
 }

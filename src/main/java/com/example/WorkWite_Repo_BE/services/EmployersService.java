@@ -4,11 +4,13 @@ import com.example.WorkWite_Repo_BE.dtos.EmployersDto.*;
 import com.example.WorkWite_Repo_BE.entities.CompanyInformation;
 import com.example.WorkWite_Repo_BE.entities.Employers;
 import com.example.WorkWite_Repo_BE.entities.User;
+import com.example.WorkWite_Repo_BE.helpers.EmailTemplateHelper;
 import com.example.WorkWite_Repo_BE.repositories.CompanyInformationJpaRepository;
 import com.example.WorkWite_Repo_BE.repositories.EmployersJpaRepository;
 
 import com.example.WorkWite_Repo_BE.repositories.UserJpaRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +25,11 @@ public class EmployersService {
     private final CompanyInformationJpaRepository companyInformationRepository;
     private final UserJpaRepository userJpaRepository;
     private final RoleService roleService;
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private EmailTemplateHelper emailTemplateHelper;
 
     public EmployersService(EmployersJpaRepository employersJpaRepository,
                             CompanyInformationJpaRepository companyInformationRepository, UserJpaRepository userJpaRepository, RoleService roleService) {
@@ -170,7 +177,71 @@ public class EmployersService {
         userJpaRepository.save(user);
     }
 
+//    // admin duyệt
+//    public void approveUpgrade(Long userId) {
+//        Employers employer = employersJpaRepository.findById(userId)
+//                .orElseThrow(() -> new RuntimeException("Employer not found"));
+//
+//        // cập nhật trạng thái employer sang APPROVED
+//        employer.setStatus("APPROVED");
+//
+//        // activate company
+//        employer.getCompanyInformation().setStatus("ACTIVE");
+//        Long idRole = 2L;
+//
+//        //chuyển user sang role Employer
+//        roleService.changeUserRole(userId,idRole);
+//
+//        // cập nhật user
+//        User user = employer.getUser();
+//        user.setStatus("EMPLOYER");
+//
+//        employersJpaRepository.save(employer);
+//        userJpaRepository.save(user);
+//    }
+//
+//    // admin từ chối
+//    @Transactional
+//    public void rejectUpgrade(Long userId) {
+//        Employers employer = employersJpaRepository.findById(userId)
+//                .orElseThrow(() -> new RuntimeException("Employer not found"));
+//
+//        // Lấy user gốc để rollback
+//        User user = employer.getUser();
+//        user.setStatus("USER");  // rollback về user thường
+//
+//        // Lưu user trước
+//        userJpaRepository.save(user);
+//
+//        // Xoá company information (nếu có quan hệ cascade remove thì chỉ cần xóa employer)
+//        CompanyInformation companyInfo = employer.getCompanyInformation();
+//        if (companyInfo != null) {
+//            companyInformationRepository.delete(companyInfo);
+//        }
+//
+//        // Xoá employer record
+//        employersJpaRepository.delete(employer);
+//    }
+//
+    public String getCompanyNameByEmployerId(Long employerId) {
+        Employers employer = employersJpaRepository.findById(employerId)
+                .orElseThrow(() -> new RuntimeException("Employer not found"));
+
+        CompanyInformation companyInformation = employer.getCompanyInformation();
+        if (companyInformation == null) {
+            throw new RuntimeException("Company information not found");
+        }
+
+        return companyInformation.getCompanyName();
+    }
+
+
+
+    /// /////
+
+
     // admin duyệt
+    @Transactional
     public void approveUpgrade(Long userId) {
         Employers employer = employersJpaRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Employer not found"));
@@ -183,7 +254,7 @@ public class EmployersService {
         Long idRole = 2L;
 
         //chuyển user sang role Employer
-        roleService.changeUserRole(userId,idRole);
+        roleService.changeUserRole(userId, idRole);
 
         // cập nhật user
         User user = employer.getUser();
@@ -191,6 +262,23 @@ public class EmployersService {
 
         employersJpaRepository.save(employer);
         userJpaRepository.save(user);
+
+        // Gửi email thông báo phê duyệt
+        try {
+            String employerEmail = user.getEmail();
+            String employerName = user.getFullName();
+            String companyName = employer.getCompanyInformation().getCompanyName();
+
+            String subject = "Tài khoản Nhà tuyển dụng đã được phê duyệt";
+            String content = emailTemplateHelper.buildEmployerApprovalEmail(employerName, companyName);
+
+            emailService.sendEmail(employerEmail, subject, content);
+
+            System.out.println("✅ Đã gửi email thông báo phê duyệt đến: " + employerEmail);
+        } catch (Exception e) {
+            System.err.println("❌ Không thể gửi email: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     // admin từ chối
@@ -201,6 +289,11 @@ public class EmployersService {
 
         // Lấy user gốc để rollback
         User user = employer.getUser();
+
+        // Lưu thông tin để gửi email trước khi xóa
+        String employerEmail = user.getEmail();
+        String employerName = user.getFullName();
+
         user.setStatus("USER");  // rollback về user thường
 
         // Lưu user trước
@@ -214,6 +307,23 @@ public class EmployersService {
 
         // Xoá employer record
         employersJpaRepository.delete(employer);
+
+        // Gửi email thông báo từ chối
+        try {
+            String subject = "Thông báo về tài khoản Nhà tuyển dụng";
+            String content = emailTemplateHelper.buildEmployerRejectionEmail(
+                    employerName,
+                    "Thông tin đăng ký chưa đáp ứng yêu cầu. Vui lòng kiểm tra và nộp lại đơn."
+            );
+
+            emailService.sendEmail(employerEmail, subject, content);
+
+            System.out.println("✅ Đã gửi email thông báo từ chối đến: " + employerEmail);
+        } catch (Exception e) {
+            System.err.println("❌ Không thể gửi email: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
+
 
 }

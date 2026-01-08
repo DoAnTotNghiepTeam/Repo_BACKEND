@@ -142,6 +142,13 @@ public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
             "GROUP BY MONTH(j.createdAt) ORDER BY MONTH(j.createdAt)")
     List<Object[]> countJobPostingByEmployerAndMonth(@Param("employerId") Long employerId, @Param("year") int year);
 
+    @Query("""
+        SELECT j FROM JobPosting j
+        WHERE j.createdAt <= :now
+          AND j.endAt >= :now
+    """)
+    List<JobPosting> findActiveJobs(@Param("now") LocalDateTime now);
+
 
 
 }

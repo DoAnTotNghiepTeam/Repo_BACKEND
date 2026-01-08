@@ -154,7 +154,7 @@ public class JobPostingServiceImpl implements JobPostingService {
 
     @Override
     public List<JobPostingResponseDTO> getAllJobPostings() {
-        return jobPostingRepository.findAll().stream()
+        return jobPostingRepository.findActiveJobs(LocalDateTime.now()).stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
     }
